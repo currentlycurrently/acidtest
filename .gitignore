@@ -1,0 +1,27 @@
+test-skills/
+
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Test skills (local only)
+test-skills/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment (shouldn't exist but just in case)
+.env
+.env.local
