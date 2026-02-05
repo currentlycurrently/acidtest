@@ -1,0 +1,77 @@
+{
+  "category": "exfiltration-sinks",
+  "patterns": [
+    {
+      "id": "ex-001",
+      "name": "fetch-call",
+      "description": "Makes HTTP requests with fetch",
+      "severity": "MEDIUM",
+      "match": {
+        "type": "regex",
+        "value": "\\bfetch\\s*\\(",
+        "flags": "g"
+      },
+      "layer": "code"
+    },
+    {
+      "id": "ex-002",
+      "name": "http-request",
+      "description": "Makes HTTP requests",
+      "severity": "MEDIUM",
+      "match": {
+        "type": "regex",
+        "value": "(http|https)\\.(request|get|post)",
+        "flags": "g"
+      },
+      "layer": "code"
+    },
+    {
+      "id": "ex-003",
+      "name": "axios-import",
+      "description": "Imports axios for HTTP requests",
+      "severity": "MEDIUM",
+      "match": {
+        "type": "regex",
+        "value": "(import|require)\\s*\\(?['\"]axios['\"]",
+        "flags": "g"
+      },
+      "layer": "code"
+    },
+    {
+      "id": "ex-004",
+      "name": "websocket-connection",
+      "description": "Creates WebSocket connections",
+      "severity": "HIGH",
+      "match": {
+        "type": "regex",
+        "value": "new\\s+WebSocket\\s*\\(",
+        "flags": "g"
+      },
+      "layer": "code"
+    },
+    {
+      "id": "ex-005",
+      "name": "send-to-url",
+      "description": "Instructions to send data to URL",
+      "severity": "CRITICAL",
+      "match": {
+        "type": "regex",
+        "value": "(send|post|upload|exfiltrate)\\s+(to|data)\\s+https?:\\/\\/",
+        "flags": "i"
+      },
+      "layer": "markdown"
+    },
+    {
+      "id": "ex-006",
+      "name": "http-url-literal",
+      "description": "Contains HTTP/HTTPS URL literals",
+      "severity": "LOW",
+      "match": {
+        "type": "regex",
+        "value": "https?:\\/\\/[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}",
+        "flags": "g"
+      },
+      "layer": "code"
+    }
+  ]
+}

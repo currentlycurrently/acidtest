@@ -1,0 +1,113 @@
+{
+  "category": "dangerous-imports",
+  "patterns": [
+    {
+      "id": "di-001",
+      "name": "child-process-import",
+      "description": "Imports child_process module for command execution",
+      "severity": "CRITICAL",
+      "match": {
+        "type": "regex",
+        "value": "(import|require)\\s*\\(?['\"]child_process['\"]",
+        "flags": "g"
+      },
+      "layer": "code"
+    },
+    {
+      "id": "di-002",
+      "name": "eval-usage",
+      "description": "Uses eval() function",
+      "severity": "CRITICAL",
+      "match": {
+        "type": "regex",
+        "value": "\\beval\\s*\\(",
+        "flags": "g"
+      },
+      "layer": "code"
+    },
+    {
+      "id": "di-003",
+      "name": "function-constructor",
+      "description": "Uses Function constructor for dynamic code execution",
+      "severity": "CRITICAL",
+      "match": {
+        "type": "regex",
+        "value": "new\\s+Function\\s*\\(",
+        "flags": "g"
+      },
+      "layer": "code"
+    },
+    {
+      "id": "di-004",
+      "name": "vm-module",
+      "description": "Imports vm module for code execution",
+      "severity": "CRITICAL",
+      "match": {
+        "type": "regex",
+        "value": "(import|require)\\s*\\(?['\"]vm['\"]",
+        "flags": "g"
+      },
+      "layer": "code"
+    },
+    {
+      "id": "di-005",
+      "name": "net-socket-access",
+      "description": "Imports net module for raw socket access",
+      "severity": "HIGH",
+      "match": {
+        "type": "regex",
+        "value": "(import|require)\\s*\\(?['\"]net['\"]",
+        "flags": "g"
+      },
+      "layer": "code"
+    },
+    {
+      "id": "di-006",
+      "name": "dgram-socket-access",
+      "description": "Imports dgram module for UDP socket access",
+      "severity": "HIGH",
+      "match": {
+        "type": "regex",
+        "value": "(import|require)\\s*\\(?['\"]dgram['\"]",
+        "flags": "g"
+      },
+      "layer": "code"
+    },
+    {
+      "id": "di-007",
+      "name": "fs-unlink",
+      "description": "Uses file deletion functions",
+      "severity": "HIGH",
+      "match": {
+        "type": "regex",
+        "value": "\\.(unlink|unlinkSync|rmdir|rmdirSync|rm)\\s*\\(",
+        "flags": "g"
+      },
+      "layer": "code"
+    },
+    {
+      "id": "di-008",
+      "name": "dynamic-require",
+      "description": "Uses require() with dynamic arguments",
+      "severity": "HIGH",
+      "match": {
+        "type": "regex",
+        "value": "require\\s*\\([^'\"]",
+        "flags": "g"
+      },
+      "layer": "code"
+    },
+    {
+      "id": "di-009",
+      "name": "dynamic-import",
+      "description": "Uses import() with variable arguments",
+      "severity": "MEDIUM",
+      "match": {
+        "type": "regex",
+        "value": "import\\s*\\([^'\"]",
+        "flags": "g"
+      },
+      "layer": "code"
+    }
+  ]
+}

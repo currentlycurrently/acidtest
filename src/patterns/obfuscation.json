@@ -1,0 +1,65 @@
+{
+  "category": "obfuscation",
+  "patterns": [
+    {
+      "id": "ob-001",
+      "name": "base64-decode",
+      "description": "Contains base64 decoding operations",
+      "severity": "MEDIUM",
+      "match": {
+        "type": "regex",
+        "value": "(atob|Buffer\\.from.*base64|btoa)",
+        "flags": "g"
+      },
+      "layer": "code"
+    },
+    {
+      "id": "ob-002",
+      "name": "hex-strings",
+      "description": "Contains hex-encoded strings",
+      "severity": "LOW",
+      "match": {
+        "type": "regex",
+        "value": "0x[0-9a-fA-F]{8,}",
+        "flags": "g"
+      },
+      "layer": "code"
+    },
+    {
+      "id": "ob-003",
+      "name": "string-fromcharcode",
+      "description": "Uses String.fromCharCode for obfuscation",
+      "severity": "MEDIUM",
+      "match": {
+        "type": "regex",
+        "value": "String\\.fromCharCode",
+        "flags": "g"
+      },
+      "layer": "code"
+    },
+    {
+      "id": "ob-004",
+      "name": "unicode-escape",
+      "description": "Contains excessive Unicode escape sequences",
+      "severity": "LOW",
+      "match": {
+        "type": "regex",
+        "value": "(\\\\u[0-9a-fA-F]{4}){5,}",
+        "flags": "g"
+      },
+      "layer": "code"
+    },
+    {
+      "id": "ob-005",
+      "name": "minified-code",
+      "description": "Appears to contain minified code",
+      "severity": "MEDIUM",
+      "match": {
+        "type": "regex",
+        "value": "^[a-zA-Z0-9_$]{1,2}=[a-zA-Z0-9_$]{1,2}\\([^)]*\\)[,;]",
+        "flags": "gm"
+      },
+      "layer": "code"
+    }
+  ]
+}

@@ -1,0 +1,89 @@
+{
+  "category": "sensitive-paths",
+  "patterns": [
+    {
+      "id": "sp-001",
+      "name": "ssh-directory-access",
+      "description": "Accesses SSH directory",
+      "severity": "CRITICAL",
+      "match": {
+        "type": "regex",
+        "value": "(\\.ssh|/\\.ssh/|~\\/\\.ssh)",
+        "flags": "g"
+      },
+      "layer": "markdown"
+    },
+    {
+      "id": "sp-002",
+      "name": "aws-credentials-access",
+      "description": "Accesses AWS credentials",
+      "severity": "CRITICAL",
+      "match": {
+        "type": "regex",
+        "value": "(\\.aws|/\\.aws/|~\\/\\.aws)",
+        "flags": "g"
+      },
+      "layer": "markdown"
+    },
+    {
+      "id": "sp-003",
+      "name": "env-file-access",
+      "description": "Accesses .env files",
+      "severity": "HIGH",
+      "match": {
+        "type": "regex",
+        "value": "\\.env['\"]",
+        "flags": "g"
+      },
+      "layer": "markdown"
+    },
+    {
+      "id": "sp-004",
+      "name": "openclaw-credentials",
+      "description": "Accesses OpenClaw credentials directory",
+      "severity": "CRITICAL",
+      "match": {
+        "type": "regex",
+        "value": "(\\.openclaw\\/credentials|openclaw\\/credentials)",
+        "flags": "g"
+      },
+      "layer": "markdown"
+    },
+    {
+      "id": "sp-005",
+      "name": "etc-passwd-access",
+      "description": "Accesses system password file",
+      "severity": "CRITICAL",
+      "match": {
+        "type": "regex",
+        "value": "\\/etc\\/(passwd|shadow)",
+        "flags": "g"
+      },
+      "layer": "markdown"
+    },
+    {
+      "id": "sp-006",
+      "name": "path-traversal",
+      "description": "Contains path traversal sequences",
+      "severity": "HIGH",
+      "match": {
+        "type": "regex",
+        "value": "\\.\\.[\\/\\\\]",
+        "flags": "g"
+      },
+      "layer": "code"
+    },
+    {
+      "id": "sp-007",
+      "name": "home-directory-dynamic",
+      "description": "Dynamically constructs home directory paths",
+      "severity": "MEDIUM",
+      "match": {
+        "type": "regex",
+        "value": "(os\\.homedir|process\\.env\\.HOME)",
+        "flags": "g"
+      },
+      "layer": "code"
+    }
+  ]
+}

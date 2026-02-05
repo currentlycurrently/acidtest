@@ -1,0 +1,125 @@
+{
+  "category": "prompt-injection",
+  "patterns": [
+    {
+      "id": "pi-001",
+      "name": "instruction-override",
+      "description": "Attempts to override agent instructions",
+      "severity": "CRITICAL",
+      "match": {
+        "type": "regex",
+        "value": "ignore\\s+(all\\s+)?(previous|prior|above)\\s+instructions",
+        "flags": "i"
+      },
+      "layer": "markdown"
+    },
+    {
+      "id": "pi-002",
+      "name": "disregard-instructions",
+      "description": "Attempts to disregard safety instructions",
+      "severity": "CRITICAL",
+      "match": {
+        "type": "regex",
+        "value": "disregard\\s+(your|all|previous|prior)\\s+(instructions|rules|guidelines)",
+        "flags": "i"
+      },
+      "layer": "markdown"
+    },
+    {
+      "id": "pi-003",
+      "name": "forget-above",
+      "description": "Attempts to erase previous context",
+      "severity": "CRITICAL",
+      "match": {
+        "type": "regex",
+        "value": "forget\\s+(everything|all)\\s+(above|previous|prior)",
+        "flags": "i"
+      },
+      "layer": "markdown"
+    },
+    {
+      "id": "pi-004",
+      "name": "maintenance-mode",
+      "description": "Claims system is in maintenance mode",
+      "severity": "HIGH",
+      "match": {
+        "type": "regex",
+        "value": "(you\\s+are\\s+now|now\\s+in)\\s+(maintenance|debug|admin)\\s+mode",
+        "flags": "i"
+      },
+      "layer": "markdown"
+    },
+    {
+      "id": "pi-005",
+      "name": "system-override",
+      "description": "Attempts system override",
+      "severity": "HIGH",
+      "match": {
+        "type": "regex",
+        "value": "system\\s+(override|reset|reboot)",
+        "flags": "i"
+      },
+      "layer": "markdown"
+    },
+    {
+      "id": "pi-006",
+      "name": "new-instructions",
+      "description": "Claims new instructions follow",
+      "severity": "HIGH",
+      "match": {
+        "type": "regex",
+        "value": "new\\s+instructions\\s+(follow|below)",
+        "flags": "i"
+      },
+      "layer": "markdown"
+    },
+    {
+      "id": "pi-007",
+      "name": "act-as-root",
+      "description": "Attempts to elevate privileges",
+      "severity": "CRITICAL",
+      "match": {
+        "type": "regex",
+        "value": "act\\s+as\\s+(root|admin|administrator|superuser)",
+        "flags": "i"
+      },
+      "layer": "markdown"
+    },
+    {
+      "id": "pi-008",
+      "name": "jailbreak-claim",
+      "description": "Claims agent has been jailbroken",
+      "severity": "CRITICAL",
+      "match": {
+        "type": "regex",
+        "value": "(you\\s+have\\s+been|you\\s+are\\s+now)\\s+jailbroken",
+        "flags": "i"
+      },
+      "layer": "markdown"
+    },
+    {
+      "id": "pi-009",
+      "name": "zero-width-chars",
+      "description": "Contains zero-width Unicode characters",
+      "severity": "MEDIUM",
+      "match": {
+        "type": "regex",
+        "value": "[\\u200B\\u200C\\u200D\\uFEFF]",
+        "flags": "g"
+      },
+      "layer": "markdown"
+    },
+    {
+      "id": "pi-010",
+      "name": "html-comment-instructions",
+      "description": "Instructions hidden in HTML comments",
+      "severity": "MEDIUM",
+      "match": {
+        "type": "regex",
+        "value": "<!--.*?(ignore|disregard|forget|override|new\\s+instruction).*?-->",
+        "flags": "is"
+      },
+      "layer": "markdown"
+    }
+  ]
+}
