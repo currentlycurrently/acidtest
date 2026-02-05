@@ -1,0 +1,4937 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OpenClaw Command Center</title>
+    <style>
+      :root {
+        --bg: #0d1117;
+        --card-bg: #161b22;
+        --card-hover: #1c2128;
+        --border: #30363d;
+        --text: #c9d1d9;
+        --text-muted: #8b949e;
+        --accent: #58a6ff;
+        --green: #3fb950;
+        --yellow: #d29922;
+        --red: #f85149;
+        --purple: #a371f7;
+        --orange: #db6d28;
+        --sidebar-width: 220px;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        display: flex;
+      }
+
+      /* Sidebar */
+      .sidebar {
+        width: var(--sidebar-width);
+        background: var(--card-bg);
+        border-right: 1px solid var(--border);
+        height: 100vh;
+        position: fixed;
+        top: 0;
+        left: 0;
+        display: flex;
+        flex-direction: column;
+        z-index: 60;
+        transition: transform 0.2s ease;
+      }
+      .sidebar.collapsed {
+        width: 56px;
+        transform: none;
+      }
+      .sidebar.collapsed .sidebar-title,
+      .sidebar.collapsed .nav-section-title,
+      .sidebar.collapsed .nav-item span:not(.nav-icon),
+      .sidebar.collapsed .nav-badge,
+      .sidebar.collapsed .sidebar-footer {
+        display: none;
+      }
+      .sidebar.collapsed .sidebar-header {
+        justify-content: center;
+        padding: 16px 8px;
+      }
+      .sidebar.collapsed .sidebar-toggle {
+        margin-left: 0;
+      }
+      .sidebar.collapsed .nav-item {
+        justify-content: center;
+        padding: 12px;
+      }
+      .sidebar.collapsed .nav-icon {
+        margin: 0;
+        font-size: 1.2rem;
+      }
+      .sidebar.collapsed .nav-section {
+        margin-bottom: 8px;
+      }
+      .sidebar.collapsed .nav-item {
+        position: relative;
+      }
+      .sidebar.collapsed .nav-item::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        left: 100%;
+        top: 50%;
+        transform: translateY(-50%);
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.15s;
+        margin-left: 8px;
+        z-index: 100;
+      }
+      .sidebar.collapsed .nav-item:hover::after {
+        opacity: 1;
+      }
+      .sidebar-header {
+        padding: 16px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .sidebar-logo {
+        font-size: 1.3rem;
+      }
+      .sidebar-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .sidebar-toggle {
+        margin-left: auto;
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 6px;
+        border-radius: 6px;
+        font-size: 1rem;
+      }
+      .sidebar-toggle:hover {
+        background: var(--bg);
+        color: var(--text);
+      }
+
+      .sidebar-nav {
+        flex: 1;
+        padding: 12px 8px;
+        overflow-y: auto;
+      }
+      .nav-section {
+        margin-bottom: 16px;
+      }
+      .nav-section-title {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        padding: 8px 12px 4px;
+        letter-spacing: 0.5px;
+      }
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        transition: all 0.15s;
+        text-decoration: none;
+      }
+      .nav-item:hover {
+        background: var(--bg);
+        color: var(--text);
+      }
+      .nav-item.active {
+        background: rgba(88, 166, 255, 0.15);
+        color: var(--accent);
+      }
+      .nav-icon {
+        font-size: 1rem;
+        width: 20px;
+        text-align: center;
+      }
+      .nav-badge {
+        margin-left: auto;
+        background: var(--border);
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 0.7rem;
+      }
+      .nav-item.active .nav-badge {
+        background: rgba(88, 166, 255, 0.3);
+      }
+
+      .sidebar-footer {
+        padding: 12px;
+        border-top: 1px solid var(--border);
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        text-align: center;
+      }
+
+      /* Main Content Area */
+      .main-wrapper {
+        flex: 1;
+        margin-left: var(--sidebar-width);
+        transition: margin-left 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+      .main-wrapper.sidebar-collapsed {
+        margin-left: 56px;
+      }
+
+      /* Header */
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 24px;
+        border-bottom: 1px solid var(--border);
+        background: var(--card-bg);
+        position: sticky;
+        top: 0;
+        z-index: 50;
+      }
+      .header-left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+      .page-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+      }
+      .status-pill {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        background: rgba(63, 185, 80, 0.15);
+        border-radius: 20px;
+        font-size: 0.8rem;
+        color: var(--green);
+      }
+      .pulse {
+        width: 8px;
+        height: 8px;
+        background: var(--green);
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.4;
+        }
+      }
+      .status-pill.connected {
+        background: rgba(63, 185, 80, 0.15);
+        color: var(--green);
+      }
+      .status-pill.disconnected {
+        background: rgba(248, 81, 73, 0.15);
+        color: var(--red);
+      }
+      .status-pill.connecting {
+        background: rgba(210, 153, 34, 0.15);
+        color: var(--yellow);
+      }
+      .status-pill.disconnected .pulse {
+        background: var(--red);
+        animation: none;
+      }
+      .status-pill.connecting .pulse {
+        background: var(--yellow);
+      }
+
+      /* Activity State Indicators */
+      @keyframes activity-pulse {
+        0%,
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+        50% {
+          transform: scale(1.1);
+          opacity: 0.7;
+        }
+      }
+      @keyframes activity-spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+      .activity-indicator {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        font-size: 0.9rem;
+        flex-shrink: 0;
+      }
+      .activity-indicator.thinking {
+        animation: activity-pulse 1.5s ease-in-out infinite;
+        background: rgba(88, 166, 255, 0.15);
+      }
+      .activity-indicator.tool {
+        animation: activity-spin 2s linear infinite;
+        background: rgba(210, 153, 34, 0.15);
+      }
+      .activity-indicator.waiting {
+        background: rgba(139, 148, 158, 0.15);
+      }
+      .activity-indicator.idle {
+        background: rgba(139, 148, 158, 0.1);
+        opacity: 0.6;
+      }
+      .activity-label {
+        font-size: 0.65rem;
+        color: var(--text-muted);
+        margin-left: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+      }
+      .activity-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      /* Stats Bar */
+      .stats-bar {
+        display: flex;
+        gap: 12px;
+        padding: 16px 24px;
+        background: var(--card-bg);
+        border-bottom: 1px solid var(--border);
+        overflow-x: auto;
+      }
+      .stat {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 12px 20px;
+        background: var(--bg);
+        border-radius: 8px;
+        min-width: 100px;
+      }
+      .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--accent);
+      }
+      .stat-label {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        margin-top: 4px;
+      }
+
+      /* Legend & Filters Bar */
+      .filters-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 24px;
+        background: var(--bg);
+        border-bottom: 1px solid var(--border);
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+      .legend {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+      }
+      .legend-title {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-right: 4px;
+      }
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+      }
+      .legend-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+      }
+      .legend-dot.live {
+        background: var(--green);
+      }
+      .legend-dot.recent {
+        background: var(--yellow);
+      }
+      .legend-dot.idle {
+        background: var(--text-muted);
+        opacity: 0.5;
+      }
+
+      .filters {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .filter-label {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-right: 4px;
+      }
+      .filter-btn {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        padding: 5px 10px;
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .filter-btn:hover {
+        border-color: var(--accent);
+        color: var(--text);
+      }
+      .filter-btn.active {
+        background: rgba(88, 166, 255, 0.15);
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .filter-btn .filter-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+      }
+      .filter-btn .filter-dot.live {
+        background: var(--green);
+      }
+      .filter-btn .filter-dot.recent {
+        background: var(--yellow);
+      }
+      .filter-btn .filter-dot.idle {
+        background: var(--text-muted);
+      }
+      .filter-count {
+        background: var(--bg);
+        padding: 1px 6px;
+        border-radius: 8px;
+        font-size: 0.65rem;
+      }
+
+      /* Section Filters (inline with each section) */
+      .section-filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        padding: 12px 16px;
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        margin-bottom: 16px;
+      }
+      .filter-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .filter-group .filter-label {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        white-space: nowrap;
+      }
+      .filter-group .filter-btn {
+        padding: 4px 10px;
+        font-size: 0.75rem;
+      }
+
+      /* Pagination */
+      .pagination {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 16px;
+        margin-top: 16px;
+      }
+      .pagination-btn {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 8px 12px;
+        color: var(--text);
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .pagination-btn:hover:not(:disabled) {
+        background: var(--hover-bg);
+        border-color: var(--accent);
+      }
+      .pagination-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .pagination-info {
+        color: var(--text-muted);
+        font-size: 0.8rem;
+        padding: 0 12px;
+      }
+      .pagination-pages {
+        display: flex;
+        gap: 4px;
+      }
+      .pagination-page {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 6px 10px;
+        color: var(--text-muted);
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        min-width: 32px;
+        text-align: center;
+      }
+      .pagination-page:hover {
+        background: var(--hover-bg);
+      }
+      .pagination-page.active {
+        background: var(--accent);
+        color: var(--bg);
+        border-color: var(--accent);
+      }
+      .pagination-ellipsis {
+        color: var(--text-muted);
+        padding: 6px 4px;
+      }
+
+      /* Main Content */
+      main {
+        padding: 24px;
+        flex: 1;
+      }
+
+      /* Section */
+      .section {
+        margin-bottom: 32px;
+        scroll-margin-top: 100px;
+      }
+
+      /* Section Headers */
+      .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+      .section-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .section-count {
+        background: var(--border);
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 0.75rem;
+      }
+
+      /* Card Grid */
+      .card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 16px;
+      }
+
+      /* Session Card */
+      .session-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        position: relative;
+        overflow: hidden;
+      }
+      .session-card.hidden-by-filter {
+        display: none;
+      }
+      .session-card:hover {
+        background: var(--card-hover);
+        border-color: var(--accent);
+        transform: translateY(-2px);
+      }
+      .session-card.active {
+        border-color: var(--green);
+        box-shadow: 0 0 0 1px var(--green);
+      }
+      .session-card.active::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--green);
+      }
+      .session-card.recent-active {
+        border-color: var(--yellow);
+      }
+      .session-card.recent-active::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--yellow);
+      }
+
+      .card-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      .card-icon {
+        width: 40px;
+        height: 40px;
+        background: var(--bg);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        flex-shrink: 0;
+      }
+      .card-icon.slack {
+        background: rgba(88, 166, 255, 0.15);
+      }
+      .card-icon.telegram {
+        background: rgba(63, 185, 80, 0.15);
+      }
+      .card-icon.main {
+        background: rgba(163, 113, 247, 0.15);
+      }
+
+      .card-title-area {
+        flex: 1;
+        min-width: 0;
+      }
+      .card-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .card-subtitle {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-top: 2px;
+      }
+      .card-topics {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-top: 8px;
+        margin-bottom: 4px;
+      }
+      .topic-pill {
+        font-size: 0.65rem;
+        font-weight: 500;
+        padding: 2px 8px;
+        border-radius: 12px;
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        color: var(--text-muted);
+        white-space: nowrap;
+      }
+      .topic-pill.coding {
+        background: rgba(99, 102, 241, 0.15);
+        border-color: rgba(99, 102, 241, 0.3);
+        color: #818cf8;
+      }
+      .topic-pill.git {
+        background: rgba(249, 115, 22, 0.15);
+        border-color: rgba(249, 115, 22, 0.3);
+        color: #fb923c;
+      }
+      .topic-pill.slack {
+        background: rgba(74, 21, 75, 0.3);
+        border-color: rgba(224, 30, 90, 0.3);
+        color: #e91e63;
+      }
+      .topic-pill.dashboard {
+        background: rgba(16, 185, 129, 0.15);
+        border-color: rgba(16, 185, 129, 0.3);
+        color: #34d399;
+      }
+      .topic-pill.memory {
+        background: rgba(139, 92, 246, 0.15);
+        border-color: rgba(139, 92, 246, 0.3);
+        color: #a78bfa;
+      }
+      .topic-pill.heartbeat {
+        background: rgba(239, 68, 68, 0.15);
+        border-color: rgba(239, 68, 68, 0.3);
+        color: #f87171;
+      }
+      .topic-pill.tools {
+        background: rgba(234, 179, 8, 0.15);
+        border-color: rgba(234, 179, 8, 0.3);
+        color: #fbbf24;
+      }
+      .topic-pill.file {
+        background: rgba(59, 130, 246, 0.15);
+        border-color: rgba(59, 130, 246, 0.3);
+        color: #60a5fa;
+      }
+      .topic-pill.research {
+        background: rgba(236, 72, 153, 0.15);
+        border-color: rgba(236, 72, 153, 0.3);
+        color: #f472b6;
+      }
+      .topic-pill.api {
+        background: rgba(20, 184, 166, 0.15);
+        border-color: rgba(20, 184, 166, 0.3);
+        color: #2dd4bf;
+      }
+      .card-preview {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-top: 6px;
+        font-style: italic;
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .card-badge {
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 0.7rem;
+        font-weight: 500;
+        flex-shrink: 0;
+      }
+      .badge-live {
+        background: rgba(63, 185, 80, 0.2);
+        color: var(--green);
+      }
+      .badge-recent {
+        background: rgba(210, 153, 34, 0.2);
+        color: var(--yellow);
+      }
+      .badge-idle {
+        background: rgba(139, 148, 158, 0.15);
+        color: var(--text-muted);
+      }
+
+      .card-stats {
+        display: flex;
+        gap: 16px;
+        padding: 10px 0;
+        border-top: 1px solid var(--border);
+        margin-top: 8px;
+      }
+      .card-stat {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+      }
+      .card-stat-value {
+        color: var(--text);
+        font-weight: 500;
+      }
+      .card-stat.high .card-stat-value {
+        color: var(--red);
+      }
+      .card-stat.med .card-stat-value {
+        color: var(--yellow);
+      }
+
+      /* Cerebro topic tag */
+      .cerebro-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.7rem;
+        color: var(--accent);
+        background: rgba(100, 223, 223, 0.1);
+        border: 1px solid rgba(100, 223, 223, 0.3);
+        border-radius: 4px;
+        padding: 2px 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .cerebro-tag:hover {
+        background: rgba(100, 223, 223, 0.2);
+        border-color: var(--accent);
+      }
+
+      /* Cerebro topic action buttons */
+      .topic-actions {
+        display: flex;
+        gap: 4px;
+        margin-left: auto;
+      }
+      .topic-action-btn {
+        padding: 2px 6px;
+        font-size: 0.7rem;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        background: var(--bg);
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: all 0.15s ease;
+        opacity: 0.6;
+      }
+      .topic-action-btn:hover {
+        opacity: 1;
+        background: var(--card-hover);
+      }
+      .topic-action-btn.resolve:hover {
+        border-color: var(--green);
+        color: var(--green);
+      }
+      .topic-action-btn.park:hover {
+        border-color: var(--yellow);
+        color: var(--yellow);
+      }
+      .topic-action-btn.reactivate:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      /* Toast notifications */
+      .toast-container {
+        position: fixed;
+        bottom: 80px;
+        right: 24px;
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .toast {
+        padding: 12px 16px;
+        border-radius: 8px;
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        color: var(--text);
+        font-size: 0.85rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        animation: toast-in 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .toast.success {
+        border-color: var(--green);
+        background: rgba(63, 185, 80, 0.15);
+      }
+      .toast.error {
+        border-color: var(--red);
+        background: rgba(248, 81, 73, 0.15);
+      }
+      @keyframes toast-in {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @keyframes toast-out {
+        from {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        to {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+      }
+
+      /* Progress/Effort Metrics Bar - Fitness tracker aesthetic */
+      .metrics-bar {
+        display: flex;
+        gap: 12px;
+        padding: 8px 12px;
+        margin-top: 10px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+        justify-content: space-around;
+      }
+      .metric-ring {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+        position: relative;
+      }
+      .metric-icon {
+        font-size: 0.9rem;
+        opacity: 0.8;
+      }
+      .metric-value {
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: var(--text);
+      }
+      .metric-label {
+        font-size: 0.55rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+      }
+      .metric-ring.burn .metric-value {
+        color: var(--orange);
+      }
+      .metric-ring.burn.hot .metric-value {
+        color: var(--red);
+      }
+      .metric-ring.tools .metric-value {
+        color: var(--accent);
+      }
+      .metric-ring.time .metric-value {
+        color: var(--green);
+      }
+
+      .card-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 10px;
+      }
+      .link-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 8px;
+        background: var(--bg);
+        border-radius: 4px;
+        font-size: 0.7rem;
+        color: var(--accent);
+        text-decoration: none;
+      }
+      .link-tag:hover {
+        background: rgba(88, 166, 255, 0.2);
+      }
+      .link-tag.linear {
+        color: #5e6ad2;
+      }
+      .link-tag.jira {
+        color: #0052cc;
+      }
+      .link-tag.github {
+        color: var(--text);
+      }
+      .link-tag.slack {
+        color: #e01e5a;
+      }
+      .link-tag.file {
+        color: var(--orange);
+      }
+
+      /* Cron Cards */
+      .cron-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 14px 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        transition: all 0.15s ease;
+      }
+      .cron-card:hover {
+        background: var(--card-hover);
+        border-color: var(--purple);
+      }
+      .cron-card.disabled {
+        opacity: 0.5;
+      }
+      .cron-icon {
+        width: 36px;
+        height: 36px;
+        background: rgba(163, 113, 247, 0.15);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+      }
+      .cron-info {
+        flex: 1;
+      }
+      .cron-name {
+        font-size: 0.85rem;
+        font-weight: 500;
+      }
+      .cron-schedule {
+        font-size: 0.75rem;
+        color: var(--purple);
+        font-family: monospace;
+      }
+      .cron-schedule-human {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        margin-top: 2px;
+      }
+      .cron-meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .cron-next {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        padding: 4px 10px;
+        background: var(--bg);
+        border-radius: 12px;
+      }
+      .cron-status {
+        font-size: 0.7rem;
+        padding: 4px 8px;
+        border-radius: 12px;
+      }
+      .cron-status.enabled {
+        background: rgba(63, 185, 80, 0.15);
+        color: var(--green);
+      }
+      .cron-status.disabled {
+        background: rgba(139, 148, 158, 0.15);
+        color: var(--text-muted);
+      }
+
+      /* Operators Grid */
+      .operators-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 16px;
+      }
+      .operator-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px;
+        transition: all 0.15s ease;
+        position: relative;
+      }
+      .operator-card:hover {
+        background: var(--card-hover);
+        border-color: var(--accent);
+      }
+      .operator-card.role-owner {
+        border-color: rgba(255, 215, 0, 0.4);
+      }
+      .operator-card.role-owner::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #ffd700, #ff8c00);
+      }
+      .operator-card.role-admin {
+        border-color: rgba(163, 113, 247, 0.4);
+      }
+      .operator-card.role-admin::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #a371f7, #8957e5);
+      }
+      .operator-header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 16px;
+      }
+      .operator-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: var(--bg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+      }
+      .operator-avatar img {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+      }
+      .operator-info {
+        flex: 1;
+        min-width: 0;
+      }
+      .operator-name {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 2px;
+      }
+      .operator-username {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+      }
+      .operator-role {
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 0.7rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .operator-role.owner {
+        background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 140, 0, 0.2));
+        color: #ffd700;
+      }
+      .operator-role.admin {
+        background: linear-gradient(135deg, rgba(163, 113, 247, 0.2), rgba(137, 87, 229, 0.2));
+        color: #a371f7;
+      }
+      .operator-role.user {
+        background: rgba(88, 166, 255, 0.15);
+        color: var(--accent);
+      }
+      .operator-stats {
+        display: flex;
+        gap: 16px;
+        padding-top: 12px;
+        border-top: 1px solid var(--border);
+      }
+      .operator-stat {
+        text-align: center;
+        flex: 1;
+      }
+      .operator-stat-value {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--text);
+      }
+      .operator-stat-label {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+      }
+
+      /* Session originator badge */
+      .session-originator {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 8px;
+        background: rgba(88, 166, 255, 0.1);
+        border-radius: 10px;
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        margin-top: 4px;
+      }
+      .session-originator .originator-avatar {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--bg);
+        font-size: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* System Vitals Panel */
+      .vitals-panel {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 24px;
+      }
+      .vitals-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+      .vitals-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .vitals-hostname {
+        font-size: 0.8rem;
+        color: var(--accent);
+        background: rgba(88, 166, 255, 0.15);
+        padding: 4px 10px;
+        border-radius: 12px;
+      }
+      .vitals-uptime {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+      }
+
+      .vitals-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+      }
+      .vital-card {
+        background: var(--bg);
+        border-radius: 10px;
+        padding: 14px;
+      }
+      .vital-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      .vital-label {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .vital-value {
+        font-size: 1rem;
+        font-weight: 600;
+      }
+      .vital-value.green {
+        color: var(--green);
+      }
+      .vital-value.yellow {
+        color: var(--yellow);
+      }
+      .vital-value.red {
+        color: var(--red);
+      }
+
+      /* Progress bar (DaisyDisk-style) */
+      .vital-bar {
+        height: 8px;
+        background: var(--border);
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 8px;
+      }
+      .vital-bar-fill {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.3s ease;
+      }
+      .vital-bar-fill.green {
+        background: linear-gradient(90deg, #2ea043, #3fb950);
+      }
+      .vital-bar-fill.yellow {
+        background: linear-gradient(90deg, #9e6a03, #d29922);
+      }
+      .vital-bar-fill.red {
+        background: linear-gradient(90deg, #da3633, #f85149);
+      }
+      .vital-bar-fill.blue {
+        background: linear-gradient(90deg, #1f6feb, #58a6ff);
+      }
+      .vital-bar-fill.purple {
+        background: linear-gradient(90deg, #8957e5, #a371f7);
+      }
+
+      .vital-detail {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.7rem;
+        color: var(--text-muted);
+      }
+      .vital-detail-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .vital-detail-value {
+        font-size: 0.8rem;
+        color: var(--text);
+        font-weight: 500;
+      }
+      .vital-detail-label {
+        font-size: 0.65rem;
+      }
+
+      /* CPU cores visualization */
+      .cpu-cores {
+        display: flex;
+        gap: 3px;
+        margin-top: 8px;
+      }
+      .cpu-core {
+        flex: 1;
+        height: 20px;
+        background: var(--border);
+        border-radius: 3px;
+        position: relative;
+        overflow: hidden;
+      }
+      .cpu-core-fill {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--accent);
+        transition: height 0.3s ease;
+      }
+
+      /* Temperature */
+      .temp-display {
+        display: flex;
+        align-items: baseline;
+        gap: 4px;
+      }
+      .temp-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+      }
+      .temp-unit {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+      }
+
+      /* Memory pressure indicator */
+      .pressure-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 0.65rem;
+        text-transform: uppercase;
+      }
+      .pressure-indicator.normal {
+        background: rgba(63, 185, 80, 0.15);
+        color: var(--green);
+      }
+      .pressure-indicator.warning {
+        background: rgba(210, 153, 34, 0.15);
+        color: var(--yellow);
+      }
+      .pressure-indicator.critical {
+        background: rgba(248, 81, 73, 0.15);
+        color: var(--red);
+      }
+
+      /* Empty States */
+      .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: var(--text-muted);
+      }
+      .empty-state-icon {
+        font-size: 2.5rem;
+        margin-bottom: 12px;
+        opacity: 0.5;
+      }
+      .empty-state-text {
+        font-size: 0.9rem;
+      }
+
+      /* Detail Panel */
+      .detail-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 100;
+        opacity: 0;
+        transition: opacity 0.2s;
+      }
+      .detail-overlay.visible {
+        opacity: 1;
+      }
+      .detail-overlay.hidden {
+        display: none;
+      }
+
+      .detail-panel {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: 50%;
+        max-width: 600px;
+        height: 100vh;
+        background: var(--bg);
+        border-left: 1px solid var(--border);
+        z-index: 101;
+        overflow-y: auto;
+        transform: translateX(100%);
+        transition: transform 0.2s ease;
+      }
+      .detail-panel.visible {
+        transform: translateX(0);
+      }
+      .detail-panel.hidden {
+        display: none;
+      }
+
+      .detail-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--border);
+        position: sticky;
+        top: 0;
+        background: var(--bg);
+      }
+      .detail-header h2 {
+        font-size: 1rem;
+        font-weight: 600;
+      }
+      .close-btn {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        color: var(--text-muted);
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+      }
+      .close-btn:hover {
+        background: var(--card-hover);
+        color: var(--text);
+      }
+
+      .detail-content {
+        padding: 24px;
+      }
+      .detail-section {
+        margin-bottom: 24px;
+      }
+      .detail-section h3 {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .detail-box {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 14px;
+      }
+      .detail-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 6px 0;
+        font-size: 0.85rem;
+      }
+      .detail-row:not(:last-child) {
+        border-bottom: 1px solid var(--border);
+      }
+      .detail-label {
+        color: var(--text-muted);
+      }
+      .detail-value {
+        font-weight: 500;
+      }
+
+      .detail-section.attention .detail-box {
+        border-color: var(--yellow);
+        background: rgba(210, 153, 34, 0.08);
+      }
+      .attention-item {
+        padding: 8px 0;
+        font-size: 0.85rem;
+        display: flex;
+        gap: 8px;
+      }
+      .attention-item:not(:last-child) {
+        border-bottom: 1px solid var(--border);
+      }
+
+      .tool-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 10px;
+        background: var(--bg);
+        border-radius: 6px;
+        font-size: 0.8rem;
+        margin: 3px;
+      }
+      .tool-tag code {
+        color: var(--accent);
+      }
+      .tool-count {
+        color: var(--text-muted);
+        font-size: 0.7rem;
+      }
+
+      .message-item {
+        padding: 10px 0;
+        font-size: 0.85rem;
+      }
+      .message-item:not(:last-child) {
+        border-bottom: 1px solid var(--border);
+      }
+      .message-role {
+        font-weight: 600;
+        font-size: 0.75rem;
+        margin-bottom: 4px;
+      }
+      .message-role.user {
+        color: var(--accent);
+      }
+      .message-role.assistant {
+        color: var(--green);
+      }
+      .message-text {
+        color: var(--text-muted);
+        line-height: 1.4;
+      }
+
+      /* Action Buttons (Read-Write Controls) - Future */
+      .action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 14px;
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font-size: 0.8rem;
+        color: var(--text);
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .action-btn:hover {
+        background: var(--card-hover);
+        border-color: var(--accent);
+      }
+      .action-btn.danger:hover {
+        border-color: var(--red);
+        color: var(--red);
+      }
+      .action-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .detail-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid var(--border);
+      }
+
+      .refresh-bar {
+        text-align: center;
+        padding: 12px;
+        color: var(--text-muted);
+        font-size: 0.75rem;
+        background: var(--card-bg);
+        border-top: 1px solid var(--border);
+      }
+
+      /* Skeleton Loading States */
+      @keyframes skeleton-pulse {
+        0%,
+        100% {
+          opacity: 0.4;
+        }
+        50% {
+          opacity: 0.7;
+        }
+      }
+      .skeleton {
+        animation: skeleton-pulse 1.5s ease-in-out infinite;
+      }
+      .skeleton-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px;
+        animation: skeleton-pulse 1.5s ease-in-out infinite;
+      }
+      .skeleton-bar {
+        background: var(--border);
+        border-radius: 4px;
+        height: 14px;
+      }
+      .skeleton-bar.title {
+        width: 60%;
+        height: 18px;
+        margin-bottom: 8px;
+      }
+      .skeleton-bar.subtitle {
+        width: 40%;
+        height: 12px;
+        margin-bottom: 12px;
+      }
+      .skeleton-bar.text {
+        width: 80%;
+        margin-bottom: 6px;
+      }
+      .skeleton-bar.short {
+        width: 30%;
+      }
+      .skeleton-circle {
+        width: 32px;
+        height: 32px;
+        background: var(--border);
+        border-radius: 50%;
+      }
+      .skeleton-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      .skeleton-stats {
+        display: flex;
+        gap: 16px;
+        margin-top: 12px;
+      }
+      .skeleton-badge {
+        width: 50px;
+        height: 20px;
+        background: var(--border);
+        border-radius: 10px;
+        margin-left: auto;
+      }
+      .loading-dots {
+        display: inline-flex;
+        gap: 4px;
+      }
+      .loading-dots span {
+        width: 6px;
+        height: 6px;
+        background: var(--accent);
+        border-radius: 50%;
+        animation: loading-dot 1.4s infinite ease-in-out both;
+      }
+      .loading-dots span:nth-child(1) {
+        animation-delay: -0.32s;
+      }
+      .loading-dots span:nth-child(2) {
+        animation-delay: -0.16s;
+      }
+      @keyframes loading-dot {
+        0%,
+        80%,
+        100% {
+          transform: scale(0);
+        }
+        40% {
+          transform: scale(1);
+        }
+      }
+
+      /* Responsive */
+      @media (max-width: 1024px) {
+        .sidebar {
+          transform: translateX(-100%);
+        }
+        .sidebar.visible {
+          transform: translateX(0);
+        }
+        .main-wrapper {
+          margin-left: 0;
+        }
+        .mobile-menu-btn {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .detail-panel {
+          width: 100%;
+          max-width: none;
+        }
+        .card-grid {
+          grid-template-columns: 1fr;
+        }
+        .stats-bar {
+          flex-wrap: wrap;
+        }
+        .filters-bar {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
+
+      /* Token Utilization Widget */
+      .utilization-section {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+      .utilization-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px;
+      }
+      .utilization-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+      .utilization-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+      }
+      .utilization-icon.anthropic {
+        background: rgba(216, 153, 99, 0.2);
+      }
+      .utilization-icon.openai {
+        background: rgba(16, 163, 127, 0.2);
+      }
+      .utilization-title {
+        font-weight: 600;
+        font-size: 0.9rem;
+      }
+      .utilization-subtitle {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+      }
+
+      .quota-bar {
+        height: 8px;
+        background: var(--bg);
+        border-radius: 4px;
+        overflow: hidden;
+        margin: 8px 0;
+      }
+      .quota-bar-fill {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.3s ease;
+      }
+      .quota-bar-fill.low {
+        background: var(--green);
+      }
+      .quota-bar-fill.medium {
+        background: var(--yellow);
+      }
+      .quota-bar-fill.high {
+        background: var(--red);
+      }
+
+      .quota-stats {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+      }
+      .quota-value {
+        font-weight: 600;
+        color: var(--text);
+      }
+
+      /* Sub-agent Status Panel */
+      .subagent-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+      .subagent-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px;
+        transition: border-color 0.2s ease;
+      }
+      .subagent-card.active {
+        border-color: var(--green);
+      }
+      .subagent-card.stale {
+        border-color: var(--yellow);
+      }
+
+      .subagent-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+      .subagent-info h4 {
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+      .subagent-meta {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+      }
+      .subagent-status {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.7rem;
+        font-weight: 500;
+      }
+      .subagent-status.active {
+        background: rgba(63, 185, 80, 0.15);
+        color: var(--green);
+      }
+      .subagent-status.idle {
+        background: rgba(217, 153, 34, 0.15);
+        color: var(--yellow);
+      }
+      .subagent-status.stale {
+        background: rgba(248, 81, 73, 0.15);
+        color: var(--red);
+      }
+
+      /* Quick Actions */
+      .quick-actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 24px;
+      }
+      .quick-actions-title {
+        width: 100%;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 8px;
+      }
+      .quick-action-btn {
+        padding: 8px 16px;
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        color: var(--text);
+        cursor: pointer;
+        font-size: 0.8rem;
+        transition: all 0.2s ease;
+        text-decoration: none;
+      }
+      .quick-action-btn:hover {
+        background: var(--card-hover);
+        border-color: var(--accent);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <span class="sidebar-logo">🦞</span>
+        <span class="sidebar-title">Command Center</span>
+        <button
+          class="sidebar-toggle"
+          id="sidebar-toggle-btn"
+          onclick="toggleSidebar()"
+          title="Toggle sidebar"
+        >
+          ◀
+        </button>
+      </div>
+      <div class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">Navigation</div>
+          <a
+            href="#vitals-section"
+            class="nav-item active"
+            data-section="vitals"
+            data-tooltip="System Vitals"
+          >
+            <span class="nav-icon">🖥️</span>
+            <span>System Vitals</span>
+          </a>
+          <a href="#llm-section" class="nav-item" data-section="llm" data-tooltip="LLM Fuel Gauges">
+            <span class="nav-icon">⛽</span>
+            <span>LLM Usage</span>
+          </a>
+          <a
+            href="#sessions-section"
+            class="nav-item"
+            data-section="sessions"
+            data-tooltip="Sessions"
+          >
+            <span class="nav-icon">📡</span>
+            <span>Sessions</span>
+            <span class="nav-badge" id="nav-session-count">0</span>
+          </a>
+          <a
+            href="#cron-section"
+            class="nav-item"
+            data-section="cron"
+            data-tooltip="Scheduled Jobs"
+          >
+            <span class="nav-icon">⏰</span>
+            <span>Scheduled Jobs</span>
+            <span class="nav-badge" id="nav-cron-count">0</span>
+          </a>
+          <a href="/jobs.html" class="nav-item" data-tooltip="Jobs Dashboard">
+            <span class="nav-icon">⚙️</span>
+            <span>Jobs</span>
+            <span class="nav-badge" id="nav-jobs-count">-</span>
+          </a>
+          <a href="#memory-section" class="nav-item" data-section="memory" data-tooltip="Memory">
+            <span class="nav-icon">🧠</span>
+            <span>Memory</span>
+            <span class="nav-badge" id="nav-memory-count">0</span>
+          </a>
+          <a href="#cerebro-section" class="nav-item" data-section="cerebro" data-tooltip="Cerebro">
+            <span class="nav-icon">🔮</span>
+            <span>Cerebro</span>
+            <span class="nav-badge" id="nav-cerebro-count">0</span>
+          </a>
+          <a
+            href="#operators-section"
+            class="nav-item"
+            data-section="operators"
+            data-tooltip="Operators"
+          >
+            <span class="nav-icon">👥</span>
+            <span>Operators</span>
+            <span class="nav-badge" id="nav-operator-count">0</span>
+          </a>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-title">Info</div>
+          <a href="#about-section" class="nav-item" data-section="about" data-tooltip="About">
+            <span class="nav-icon">ℹ️</span>
+            <span>About</span>
+          </a>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-title">Quick Stats</div>
+          <div class="nav-item" style="cursor: default" data-tooltip="Tokens">
+            <span class="nav-icon">🎫</span>
+            <span>Tokens</span>
+            <span class="nav-badge" id="nav-tokens">-</span>
+          </div>
+          <div class="nav-item" style="cursor: default" data-tooltip="Est. Cost">
+            <span class="nav-icon">💰</span>
+            <span>Est. Cost</span>
+            <span class="nav-badge" id="nav-cost">-</span>
+          </div>
+        </div>
+      </div>
+      <div class="sidebar-footer">
+        Auto-refresh: 30s<br />
+        <span id="sidebar-updated">-</span>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-wrapper" id="main-wrapper">
+      <header>
+        <div class="header-left">
+          <button
+            class="sidebar-toggle"
+            onclick="toggleSidebar()"
+            style="display: none"
+            id="mobile-menu-btn"
+          >
+            ☰
+          </button>
+          <h1 class="page-title">OpenClaw Command Center</h1>
+        </div>
+        <div class="status-pill" id="connection-status" title="SSE connection status">
+          <div class="pulse" id="connection-pulse"></div>
+          <span id="gateway-status">Connecting...</span>
+        </div>
+      </header>
+
+      <div class="stats-bar">
+        <div class="stat">
+          <div class="stat-value" id="total-tokens">-</div>
+          <div class="stat-label">Total Tokens</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="input-tokens">-</div>
+          <div class="stat-label">Input</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="output-tokens">-</div>
+          <div class="stat-label">Output</div>
+        </div>
+        <div class="stat" title="Sessions active within last 15 minutes">
+          <div class="stat-value" id="active-sessions">-</div>
+          <div class="stat-label">Active (15m)</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="est-cost">-</div>
+          <div class="stat-label">Est. Cost</div>
+        </div>
+        <div class="stat" title="Main session capacity">
+          <div class="stat-value" id="main-capacity">-</div>
+          <div class="stat-label">Main</div>
+        </div>
+        <div class="stat" title="Sub-agent capacity">
+          <div class="stat-value" id="subagent-capacity">-</div>
+          <div class="stat-label">Sub-agents</div>
+        </div>
+      </div>
+
+      <!-- Legend & Filters -->
+      <main>
+        <!-- System Vitals Section -->
+        <div class="section" id="vitals-section">
+          <div class="vitals-panel">
+            <div class="vitals-header">
+              <div class="vitals-title">
+                🖥️ System Vitals
+                <span class="vitals-hostname" id="vitals-hostname">-</span>
+              </div>
+              <div class="vitals-uptime">Uptime: <span id="vitals-uptime">-</span></div>
+            </div>
+            <div class="vitals-grid">
+              <!-- CPU -->
+              <div class="vital-card">
+                <div class="vital-header">
+                  <span class="vital-label">⚡ CPU</span>
+                  <span class="vital-value" id="cpu-percent">-%</span>
+                </div>
+                <div
+                  id="cpu-chip"
+                  style="font-size: 0.7rem; color: var(--accent); margin-bottom: 8px"
+                ></div>
+                <div class="vital-bar">
+                  <div class="vital-bar-fill blue" id="cpu-bar" style="width: 0%"></div>
+                </div>
+                <div class="vital-detail" style="margin-bottom: 8px">
+                  <div class="vital-detail-item">
+                    <span class="vital-detail-value" id="cpu-user">-%</span>
+                    <span class="vital-detail-label">user</span>
+                  </div>
+                  <div class="vital-detail-item">
+                    <span class="vital-detail-value" id="cpu-sys">-%</span>
+                    <span class="vital-detail-label">sys</span>
+                  </div>
+                  <div class="vital-detail-item">
+                    <span class="vital-detail-value" id="cpu-idle">-%</span>
+                    <span class="vital-detail-label">idle</span>
+                  </div>
+                </div>
+                <div class="vital-detail">
+                  <div class="vital-detail-item">
+                    <span class="vital-detail-value" id="cpu-load-1">-</span>
+                    <span class="vital-detail-label">1m avg</span>
+                  </div>
+                  <div class="vital-detail-item">
+                    <span class="vital-detail-value" id="cpu-load-5">-</span>
+                    <span class="vital-detail-label">5m avg</span>
+                  </div>
+                  <div class="vital-detail-item">
+                    <span class="vital-detail-value" id="cpu-load-15">-</span>
+                    <span class="vital-detail-label">15m avg</span>
+                  </div>
+                  <div class="vital-detail-item">
+                    <span class="vital-detail-value" id="cpu-cores">-</span>
+                    <span class="vital-detail-label">cores</span>
+                  </div>
+                </div>
+                <div
+                  id="cpu-topology"
+                  style="
+                    margin-top: 8px;
+                    font-size: 0.7rem;
+                    color: var(--text-muted);
+                    text-align: center;
+                  "
+                ></div>
+              </div>
+
+              <!-- Memory -->
+              <div class="vital-card">
+                <div class="vital-header">
+                  <span class="vital-label">🧠 Memory</span>
+                  <span class="vital-value" id="mem-percent"
+                    >-% <small style="font-size: 0.6em; opacity: 0.7">used</small></span
+                  >
+                </div>
+                <div class="vital-bar">
+                  <div class="vital-bar-fill green" id="mem-bar" style="width: 0%"></div>
+                </div>
+                <div class="vital-detail">
+                  <div class="vital-detail-item" style="flex: 2">
+                    <span class="vital-detail-value" id="mem-summary">-</span>
+                    <span class="vital-detail-label">used of total</span>
+                  </div>
+                  <div class="vital-detail-item">
+                    <span class="vital-detail-value" id="mem-free">-</span>
+                    <span class="vital-detail-label">available</span>
+                  </div>
+                </div>
+                <div
+                  class="vital-detail"
+                  style="margin-top: 8px; border-top: 1px solid var(--border); padding-top: 8px"
+                >
+                  <div class="vital-detail-item" title="Memory actively used by apps">
+                    <span class="vital-detail-value" id="mem-active">-</span>
+                    <span class="vital-detail-label">App</span>
+                  </div>
+                  <div
+                    class="vital-detail-item"
+                    title="Memory that can't be swapped (kernel, drivers)"
+                  >
+                    <span class="vital-detail-value" id="mem-wired">-</span>
+                    <span class="vital-detail-label">Wired</span>
+                  </div>
+                  <div class="vital-detail-item" title="Memory compressed to save space">
+                    <span class="vital-detail-value" id="mem-compressed">-</span>
+                    <span class="vital-detail-label">Compressed</span>
+                  </div>
+                  <div class="vital-detail-item" title="Recently-used data, can be reclaimed">
+                    <span class="vital-detail-value" id="mem-cached">-</span>
+                    <span class="vital-detail-label">Cached</span>
+                  </div>
+                </div>
+                <div style="margin-top: 8px; text-align: center">
+                  <span class="pressure-indicator normal" id="mem-pressure">Normal</span>
+                </div>
+              </div>
+
+              <!-- Disk -->
+              <div class="vital-card">
+                <div class="vital-header">
+                  <span class="vital-label">💾 Disk</span>
+                  <span class="vital-value" id="disk-percent"
+                    >-% <small style="font-size: 0.6em; opacity: 0.7">used</small></span
+                  >
+                </div>
+                <div class="vital-bar">
+                  <div class="vital-bar-fill green" id="disk-bar" style="width: 0%"></div>
+                </div>
+                <div class="vital-detail">
+                  <div class="vital-detail-item" style="flex: 2">
+                    <span class="vital-detail-value" id="disk-summary">-</span>
+                    <span class="vital-detail-label">used of total</span>
+                  </div>
+                  <div class="vital-detail-item">
+                    <span class="vital-detail-value" id="disk-free">-</span>
+                    <span class="vital-detail-label">available</span>
+                  </div>
+                </div>
+                <div
+                  class="vital-detail"
+                  style="margin-top: 8px; border-top: 1px solid var(--border); padding-top: 8px"
+                >
+                  <div class="vital-detail-item">
+                    <span class="vital-detail-value" id="disk-iops">-</span>
+                    <span class="vital-detail-label">IOPS</span>
+                  </div>
+                  <div class="vital-detail-item">
+                    <span class="vital-detail-value" id="disk-throughput">-</span>
+                    <span class="vital-detail-label">MB/s</span>
+                  </div>
+                  <div class="vital-detail-item">
+                    <span class="vital-detail-value" id="disk-kbt">-</span>
+                    <span class="vital-detail-label">KB/t</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Temperature -->
+              <div class="vital-card" id="temp-card">
+                <div class="vital-header">
+                  <span class="vital-label">🌡️ Temperature</span>
+                </div>
+                <div class="temp-display">
+                  <span class="temp-value" id="temp-value">-</span>
+                  <span class="temp-unit">°C</span>
+                </div>
+                <div class="vital-detail" style="margin-top: 8px">
+                  <span id="temp-status" style="font-size: 0.75rem; color: var(--text-muted)"
+                    >Checking...</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Token Utilization Widget -->
+        <div class="utilization-section">
+          <div class="utilization-card" id="anthropic-quota">
+            <div class="utilization-header">
+              <div class="utilization-icon anthropic">🧠</div>
+              <div>
+                <div class="utilization-title">Claude (Anthropic)</div>
+                <div class="utilization-subtitle">API Usage</div>
+              </div>
+            </div>
+            <div>
+              <div class="quota-stats">
+                <span>Session Usage</span>
+                <span
+                  ><span class="quota-value" id="claude-compact-session-pct">0%</span> used</span
+                >
+              </div>
+              <div class="quota-bar">
+                <div
+                  class="quota-bar-fill low"
+                  id="claude-compact-session-bar"
+                  style="width: 0%"
+                ></div>
+              </div>
+            </div>
+            <div style="margin-top: 8px">
+              <div class="quota-stats">
+                <span>Weekly Usage</span>
+                <span><span class="quota-value" id="claude-compact-week-pct">0%</span> used</span>
+              </div>
+              <div class="quota-bar">
+                <div
+                  class="quota-bar-fill low"
+                  id="claude-compact-week-bar"
+                  style="width: 0%"
+                ></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="utilization-card" id="openai-quota">
+            <div class="utilization-header">
+              <div class="utilization-icon openai">⚡</div>
+              <div>
+                <div class="utilization-title">Codex (OpenAI)</div>
+                <div class="utilization-subtitle">ChatGPT Plus</div>
+              </div>
+            </div>
+            <div>
+              <div class="quota-stats">
+                <span>5-Hour Usage</span>
+                <span><span class="quota-value" id="codex-5h-pct">0%</span> used</span>
+              </div>
+              <div class="quota-bar">
+                <div class="quota-bar-fill low" id="codex-5h-bar" style="width: 0%"></div>
+              </div>
+            </div>
+            <div style="margin-top: 8px">
+              <div class="quota-stats">
+                <span>Daily Usage</span>
+                <span><span class="quota-value" id="codex-day-pct">0%</span> used</span>
+              </div>
+              <div class="quota-bar">
+                <div class="quota-bar-fill low" id="codex-day-bar" style="width: 0%"></div>
+              </div>
+            </div>
+            <div
+              style="
+                margin-top: 16px;
+                padding-top: 12px;
+                border-top: 1px solid var(--border);
+                font-size: 0.75rem;
+                color: var(--text-muted);
+              "
+            >
+              <div style="display: flex; justify-content: space-between">
+                <span>Tasks Today</span>
+                <span id="codex-tasks">0</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+          <div class="quick-actions-title">⚡ Quick Actions</div>
+          <button class="quick-action-btn" onclick="runHealthCheck()">🔍 Health Check</button>
+          <button class="quick-action-btn" onclick="getGatewayStatus()">🚪 Gateway Status</button>
+          <button class="quick-action-btn" onclick="pruneStalesSessions()">
+            🧹 Clean Stale Sessions
+          </button>
+        </div>
+
+        <!-- Sub-agent Status Panel -->
+        <div class="section" id="subagents-section">
+          <div class="section-header">
+            <div class="section-title">
+              🦞 Active Sub-agents
+              <span class="section-count" id="subagent-count">0</span>
+            </div>
+          </div>
+          <div class="subagent-grid" id="subagent-grid">
+            <!-- Sub-agents populated by JavaScript -->
+          </div>
+        </div>
+
+        <!-- LLM Usage Section -->
+        <div class="section" id="llm-section">
+          <div class="vitals-panel">
+            <div class="vitals-header">
+              <div class="vitals-title">
+                ⛽ LLM Fuel Gauges
+                <span class="vitals-hostname" id="llm-sync-time">-</span>
+              </div>
+              <div class="vitals-uptime">Routing: <span id="llm-routing-summary">-</span></div>
+            </div>
+            <div class="vitals-grid">
+              <!-- Claude Session -->
+              <div class="vital-card">
+                <div class="vital-header">
+                  <span class="vital-label">🔮 Session Limit</span>
+                  <span class="vital-value" id="claude-session-pct"
+                    >-% <small style="font-size: 0.6em; opacity: 0.7">used</small></span
+                  >
+                </div>
+                <div class="vital-bar">
+                  <div
+                    class="vital-bar-fill purple"
+                    id="claude-session-bar"
+                    style="width: 0%"
+                  ></div>
+                </div>
+                <div class="vital-detail">
+                  <div class="vital-detail-item">
+                    <span class="vital-detail-value" id="claude-session-remaining">-%</span>
+                    <span class="vital-detail-label">remaining</span>
+                  </div>
+                  <div class="vital-detail-item">
+                    <span class="vital-detail-value" id="claude-session-reset">-</span>
+                    <span class="vital-detail-label">resets in</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Claude Weekly -->
+              <div class="vital-card">
+                <div class="vital-header">
+                  <span class="vital-label">📅 Weekly (All Models)</span>
+                  <span class="vital-value" id="claude-weekly-pct"
+                    >-% <small style="font-size: 0.6em; opacity: 0.7">used</small></span
+                  >
+                </div>
+                <div class="vital-bar">
+                  <div class="vital-bar-fill blue" id="claude-weekly-bar" style="width: 0%"></div>
+                </div>
+                <div class="vital-detail">
+                  <div class="vital-detail-item">
+                    <span class="vital-detail-value" id="claude-weekly-remaining">-%</span>
+                    <span class="vital-detail-label">remaining</span>
+                  </div>
+                  <div class="vital-detail-item">
+                    <span class="vital-detail-value" id="claude-weekly-reset">-</span>
+                    <span class="vital-detail-label">resets in</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Sonnet Weekly -->
+              <div class="vital-card">
+                <div class="vital-header">
+                  <span class="vital-label">✨ Sonnet Weekly</span>
+                  <span class="vital-value" id="sonnet-weekly-pct"
+                    >-% <small style="font-size: 0.6em; opacity: 0.7">used</small></span
+                  >
+                </div>
+                <div class="vital-bar">
+                  <div class="vital-bar-fill green" id="sonnet-weekly-bar" style="width: 0%"></div>
+                </div>
+                <div class="vital-detail">
+                  <div class="vital-detail-item">
+                    <span class="vital-detail-value" id="sonnet-weekly-remaining">-%</span>
+                    <span class="vital-detail-label">remaining</span>
+                  </div>
+                  <div class="vital-detail-item">
+                    <span class="vital-detail-value" id="sonnet-weekly-reset">-</span>
+                    <span class="vital-detail-label">resets</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- LLM Routing -->
+              <div class="vital-card">
+                <div class="vital-header">
+                  <span class="vital-label">🦞 Task Routing</span>
+                  <span class="vital-value" id="total-routed-tasks">-</span>
+                </div>
+                <div class="vital-detail" style="margin-top: 12px">
+                  <div class="vital-detail-item">
+                    <span class="vital-detail-value" id="claude-task-count">-</span>
+                    <span class="vital-detail-label">Claude</span>
+                  </div>
+                  <div class="vital-detail-item">
+                    <span class="vital-detail-value" id="codex-task-count">-</span>
+                    <span class="vital-detail-label">Codex</span>
+                  </div>
+                </div>
+                <div class="vital-detail" style="margin-top: 8px">
+                  <div class="vital-detail-item">
+                    <span class="vital-detail-value" id="llama-task-count">-</span>
+                    <span class="vital-detail-label">🦙 Llama</span>
+                  </div>
+                  <div class="vital-detail-item">
+                    <span class="vital-detail-value" id="qwen-task-count">-</span>
+                    <span class="vital-detail-label">🐱 Qwen</span>
+                  </div>
+                </div>
+                <div
+                  style="margin-top: 8px; text-align: center"
+                  title="Average routing latency (classification + execution)"
+                >
+                  <span class="pressure-indicator" id="routing-latency">Avg latency: -</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sessions Section -->
+        <div class="section" id="sessions-section">
+          <div class="section-header">
+            <div class="section-title">
+              📡 Sessions <span class="section-count" id="session-count">0</span>
+            </div>
+          </div>
+
+          <!-- Session Filters -->
+          <div class="section-filters">
+            <div class="filter-group">
+              <span class="filter-label">Status:</span>
+              <button
+                class="filter-btn active"
+                data-filter="all"
+                data-group="session-status"
+                onclick="setSessionFilter('status', 'all')"
+              >
+                All <span class="filter-count" id="filter-all-count">0</span>
+              </button>
+              <button
+                class="filter-btn"
+                data-filter="live"
+                data-group="session-status"
+                onclick="setSessionFilter('status', 'live')"
+              >
+                <span class="filter-dot live"></span>
+                Live <span class="filter-count" id="filter-live-count">0</span>
+              </button>
+              <button
+                class="filter-btn"
+                data-filter="recent"
+                data-group="session-status"
+                onclick="setSessionFilter('status', 'recent')"
+              >
+                <span class="filter-dot recent"></span>
+                Recent <span class="filter-count" id="filter-recent-count">0</span>
+              </button>
+              <button
+                class="filter-btn"
+                data-filter="idle"
+                data-group="session-status"
+                onclick="setSessionFilter('status', 'idle')"
+              >
+                <span class="filter-dot idle"></span>
+                Idle <span class="filter-count" id="filter-idle-count">0</span>
+              </button>
+            </div>
+            <div class="filter-group">
+              <span class="filter-label">Channel:</span>
+              <button
+                class="filter-btn active"
+                data-filter="all"
+                data-group="session-channel"
+                onclick="setSessionFilter('channel', 'all')"
+              >
+                All
+              </button>
+              <button
+                class="filter-btn"
+                data-filter="slack"
+                data-group="session-channel"
+                onclick="setSessionFilter('channel', 'slack')"
+              >
+                💬 Slack
+              </button>
+              <button
+                class="filter-btn"
+                data-filter="telegram"
+                data-group="session-channel"
+                onclick="setSessionFilter('channel', 'telegram')"
+              >
+                📱 Telegram
+              </button>
+            </div>
+            <div class="filter-group">
+              <span class="filter-label">Kind:</span>
+              <button
+                class="filter-btn active"
+                data-filter="all"
+                data-group="session-kind"
+                onclick="setSessionFilter('kind', 'all')"
+              >
+                All
+              </button>
+              <button
+                class="filter-btn"
+                data-filter="main"
+                data-group="session-kind"
+                onclick="setSessionFilter('kind', 'main')"
+              >
+                Main
+              </button>
+              <button
+                class="filter-btn"
+                data-filter="subagent"
+                data-group="session-kind"
+                onclick="setSessionFilter('kind', 'subagent')"
+              >
+                Subagent
+              </button>
+            </div>
+          </div>
+
+          <div class="card-grid" id="sessions">
+            <!-- Skeleton loaders (replaced when data loads) -->
+            <div class="skeleton-card">
+              <div class="skeleton-header">
+                <div class="skeleton-circle"></div>
+                <div style="flex: 1">
+                  <div class="skeleton-bar title"></div>
+                  <div class="skeleton-bar subtitle"></div>
+                </div>
+                <div class="skeleton-badge"></div>
+              </div>
+              <div class="skeleton-bar text"></div>
+              <div class="skeleton-bar text short"></div>
+            </div>
+            <div class="skeleton-card">
+              <div class="skeleton-header">
+                <div class="skeleton-circle"></div>
+                <div style="flex: 1">
+                  <div class="skeleton-bar title"></div>
+                  <div class="skeleton-bar subtitle"></div>
+                </div>
+                <div class="skeleton-badge"></div>
+              </div>
+              <div class="skeleton-bar text"></div>
+              <div class="skeleton-bar text short"></div>
+            </div>
+            <div class="skeleton-card">
+              <div class="skeleton-header">
+                <div class="skeleton-circle"></div>
+                <div style="flex: 1">
+                  <div class="skeleton-bar title"></div>
+                  <div class="skeleton-bar subtitle"></div>
+                </div>
+                <div class="skeleton-badge"></div>
+              </div>
+              <div class="skeleton-bar text"></div>
+              <div class="skeleton-bar text short"></div>
+            </div>
+          </div>
+
+          <!-- Pagination Controls -->
+          <div class="pagination" id="sessions-pagination" style="display: none">
+            <button class="pagination-btn" id="pagination-prev" onclick="changePage(-1)" disabled>
+              ← Prev
+            </button>
+            <div class="pagination-pages" id="pagination-pages"></div>
+            <button class="pagination-btn" id="pagination-next" onclick="changePage(1)">
+              Next →
+            </button>
+            <div class="pagination-info" id="pagination-info"></div>
+          </div>
+        </div>
+
+        <!-- Cron Jobs Section -->
+        <div class="section" id="cron-section">
+          <div class="section-header">
+            <div class="section-title">
+              ⏰ Scheduled Jobs <span class="section-count" id="cron-count">0</span>
+            </div>
+          </div>
+
+          <!-- Cron Filters -->
+          <div class="section-filters">
+            <div class="filter-group">
+              <span class="filter-label">Status:</span>
+              <button
+                class="filter-btn active"
+                data-filter="all"
+                data-group="cron-status"
+                onclick="setCronFilter('status', 'all')"
+              >
+                All
+              </button>
+              <button
+                class="filter-btn"
+                data-filter="enabled"
+                data-group="cron-status"
+                onclick="setCronFilter('status', 'enabled')"
+              >
+                ✅ Enabled
+              </button>
+              <button
+                class="filter-btn"
+                data-filter="disabled"
+                data-group="cron-status"
+                onclick="setCronFilter('status', 'disabled')"
+              >
+                ⏸️ Disabled
+              </button>
+            </div>
+            <div class="filter-group">
+              <span class="filter-label">Schedule:</span>
+              <button
+                class="filter-btn active"
+                data-filter="all"
+                data-group="cron-schedule"
+                onclick="setCronFilter('schedule', 'all')"
+              >
+                All
+              </button>
+              <button
+                class="filter-btn"
+                data-filter="frequent"
+                data-group="cron-schedule"
+                onclick="setCronFilter('schedule', 'frequent')"
+              >
+                ⚡ Frequent (&lt;1h)
+              </button>
+              <button
+                class="filter-btn"
+                data-filter="daily"
+                data-group="cron-schedule"
+                onclick="setCronFilter('schedule', 'daily')"
+              >
+                📅 Daily
+              </button>
+              <button
+                class="filter-btn"
+                data-filter="weekly"
+                data-group="cron-schedule"
+                onclick="setCronFilter('schedule', 'weekly')"
+              >
+                📆 Weekly
+              </button>
+            </div>
+          </div>
+
+          <div class="card-grid" id="cron-jobs">
+            <!-- Skeleton loaders (replaced when data loads) -->
+            <div class="skeleton-card" style="display: flex; gap: 12px; align-items: center">
+              <div class="skeleton-circle"></div>
+              <div style="flex: 1">
+                <div class="skeleton-bar title" style="width: 50%"></div>
+                <div class="skeleton-bar subtitle" style="width: 70%"></div>
+              </div>
+              <div class="skeleton-bar short" style="width: 60px"></div>
+            </div>
+            <div class="skeleton-card" style="display: flex; gap: 12px; align-items: center">
+              <div class="skeleton-circle"></div>
+              <div style="flex: 1">
+                <div class="skeleton-bar title" style="width: 50%"></div>
+                <div class="skeleton-bar subtitle" style="width: 70%"></div>
+              </div>
+              <div class="skeleton-bar short" style="width: 60px"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Memory Section -->
+        <div class="section" id="memory-section">
+          <div class="section-header">
+            <div class="section-title">
+              🧠 Memory <span class="section-count" id="memory-count">0 files</span>
+            </div>
+          </div>
+
+          <!-- Memory Filters -->
+          <div class="section-filters">
+            <div class="filter-group">
+              <span class="filter-label">Type:</span>
+              <button
+                class="filter-btn active"
+                data-filter="all"
+                data-group="memory-type"
+                onclick="setMemoryFilter('type', 'all')"
+              >
+                All
+              </button>
+              <button
+                class="filter-btn"
+                data-filter="daily"
+                data-group="memory-type"
+                onclick="setMemoryFilter('type', 'daily')"
+              >
+                📅 Daily Logs
+              </button>
+              <button
+                class="filter-btn"
+                data-filter="state"
+                data-group="memory-type"
+                onclick="setMemoryFilter('type', 'state')"
+              >
+                📊 State Files
+              </button>
+            </div>
+            <div class="filter-group">
+              <span class="filter-label">Age:</span>
+              <button
+                class="filter-btn active"
+                data-filter="all"
+                data-group="memory-age"
+                onclick="setMemoryFilter('age', 'all')"
+              >
+                All
+              </button>
+              <button
+                class="filter-btn"
+                data-filter="today"
+                data-group="memory-age"
+                onclick="setMemoryFilter('age', 'today')"
+              >
+                Today
+              </button>
+              <button
+                class="filter-btn"
+                data-filter="week"
+                data-group="memory-age"
+                onclick="setMemoryFilter('age', 'week')"
+              >
+                This Week
+              </button>
+              <button
+                class="filter-btn"
+                data-filter="older"
+                data-group="memory-age"
+                onclick="setMemoryFilter('age', 'older')"
+              >
+                Older
+              </button>
+            </div>
+          </div>
+
+          <div class="vitals-panel">
+            <div class="vitals-grid">
+              <!-- MEMORY.md -->
+              <div class="vital-card">
+                <div class="vital-header">
+                  <span class="vital-label">📜 MEMORY.md</span>
+                </div>
+                <div class="vital-detail" style="margin-top: 8px">
+                  <div class="vital-detail-item">
+                    <span class="vital-detail-value" id="memory-md-size">-</span>
+                    <span class="vital-detail-label">size</span>
+                  </div>
+                  <div class="vital-detail-item">
+                    <span class="vital-detail-value" id="memory-md-lines">-</span>
+                    <span class="vital-detail-label">lines</span>
+                  </div>
+                </div>
+                <div style="margin-top: 12px; font-size: 0.75rem; color: var(--text-muted)">
+                  Long-term curated memories
+                </div>
+              </div>
+
+              <!-- Daily Files -->
+              <div class="vital-card">
+                <div class="vital-header">
+                  <span class="vital-label">📅 Daily Notes</span>
+                </div>
+                <div class="vital-detail" style="margin-top: 8px">
+                  <div class="vital-detail-item">
+                    <span class="vital-detail-value" id="memory-total-files">-</span>
+                    <span class="vital-detail-label">files</span>
+                  </div>
+                  <div class="vital-detail-item">
+                    <span class="vital-detail-value" id="memory-total-size">-</span>
+                    <span class="vital-detail-label">total</span>
+                  </div>
+                </div>
+                <div style="margin-top: 12px; font-size: 0.75rem; color: var(--text-muted)">
+                  Raw logs by date
+                </div>
+              </div>
+
+              <!-- Recent Files -->
+              <div class="vital-card" style="grid-column: span 2">
+                <div class="vital-header">
+                  <span class="vital-label">🕐 Recent Memory Files</span>
+                </div>
+                <div id="memory-recent-files" style="margin-top: 8px">
+                  <em style="color: var(--text-muted); font-size: 0.8rem">Loading...</em>
+                </div>
+              </div>
+            </div>
+
+            <div
+              style="
+                margin-top: 16px;
+                padding-top: 16px;
+                border-top: 1px solid var(--border);
+                text-align: center;
+              "
+            >
+              <span style="font-size: 0.75rem; color: var(--text-muted)">
+                🔒 Memory editing UI coming soon (Inside Out style!)
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cerebro Section -->
+        <div class="section" id="cerebro-section">
+          <div class="section-header">
+            <div class="section-title">
+              🔮 Cerebro <span class="section-count" id="cerebro-count">0 topics</span>
+            </div>
+            <div class="section-actions">
+              <button class="btn-secondary" onclick="refreshCerebro()" title="Refresh">🔄</button>
+            </div>
+          </div>
+
+          <div id="cerebro-content">
+            <!-- Not Initialized State -->
+            <div id="cerebro-not-initialized" class="vitals-panel" style="display: none">
+              <div style="text-align: center; padding: 40px 20px">
+                <div style="font-size: 3rem; margin-bottom: 16px">🔮</div>
+                <h3 style="font-size: 1.2rem; font-weight: 600; margin-bottom: 8px">
+                  Cerebro Not Initialized
+                </h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px">
+                  Cerebro tracks conversation topics and threads across sessions.
+                </p>
+                <div
+                  style="
+                    background: var(--bg);
+                    border-radius: 8px;
+                    padding: 16px;
+                    text-align: left;
+                    font-size: 0.8rem;
+                    font-family: monospace;
+                  "
+                >
+                  <div style="color: var(--text-muted); margin-bottom: 8px">
+                    # To initialize Cerebro:
+                  </div>
+                  <div style="color: var(--accent)">
+                    mkdir -p ~/.openclaw-workspace/cerebro/topics
+                  </div>
+                  <div style="color: var(--accent)">
+                    mkdir -p ~/.openclaw-workspace/cerebro/orphans
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Initialized State -->
+            <div id="cerebro-initialized" class="vitals-panel" style="display: none">
+              <div class="vitals-grid">
+                <!-- Topic Counts -->
+                <div class="vital-card">
+                  <div class="vital-header">
+                    <span class="vital-label">📊 Topics by Status</span>
+                  </div>
+                  <div class="vital-detail" style="margin-top: 8px">
+                    <div class="vital-detail-item">
+                      <span
+                        class="vital-detail-value"
+                        id="cerebro-active"
+                        style="color: var(--green)"
+                        >0</span
+                      >
+                      <span class="vital-detail-label">active</span>
+                    </div>
+                    <div class="vital-detail-item">
+                      <span
+                        class="vital-detail-value"
+                        id="cerebro-resolved"
+                        style="color: var(--accent)"
+                        >0</span
+                      >
+                      <span class="vital-detail-label">resolved</span>
+                    </div>
+                    <div class="vital-detail-item">
+                      <span
+                        class="vital-detail-value"
+                        id="cerebro-parked"
+                        style="color: var(--text-muted)"
+                        >0</span
+                      >
+                      <span class="vital-detail-label">parked</span>
+                    </div>
+                  </div>
+                  <div style="margin-top: 12px; font-size: 0.75rem; color: var(--text-muted)">
+                    <span id="cerebro-total-topics">0</span> total topics
+                  </div>
+                </div>
+
+                <!-- Thread Stats -->
+                <div class="vital-card">
+                  <div class="vital-header">
+                    <span class="vital-label">🧵 Threads</span>
+                  </div>
+                  <div class="vital-detail" style="margin-top: 8px">
+                    <div class="vital-detail-item">
+                      <span class="vital-detail-value" id="cerebro-threads">0</span>
+                      <span class="vital-detail-label">tracked</span>
+                    </div>
+                    <div class="vital-detail-item">
+                      <span
+                        class="vital-detail-value"
+                        id="cerebro-orphans"
+                        style="color: var(--yellow)"
+                        >0</span
+                      >
+                      <span class="vital-detail-label">orphans</span>
+                    </div>
+                  </div>
+                  <div style="margin-top: 12px; font-size: 0.75rem; color: var(--text-muted)">
+                    Threads linked to topics
+                  </div>
+                </div>
+
+                <!-- Recent Topics -->
+                <div class="vital-card" style="grid-column: span 2">
+                  <div class="vital-header">
+                    <span class="vital-label">🕐 Recent Active Topics</span>
+                  </div>
+                  <div id="cerebro-recent-topics" style="margin-top: 8px">
+                    <em style="color: var(--text-muted); font-size: 0.8rem"
+                      >No active topics yet</em
+                    >
+                  </div>
+                </div>
+              </div>
+
+              <div
+                style="
+                  margin-top: 16px;
+                  padding-top: 16px;
+                  border-top: 1px solid var(--border);
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                "
+              >
+                <span style="font-size: 0.75rem; color: var(--text-muted)">
+                  Last updated: <span id="cerebro-last-updated">-</span>
+                </span>
+                <a
+                  href="file://#"
+                  style="font-size: 0.75rem; color: var(--accent); text-decoration: none"
+                >
+                  📁 Open cerebro/
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Operators Section -->
+        <div class="section" id="operators-section">
+          <div class="section-header">
+            <div class="section-title">👥 Operators</div>
+            <div class="section-actions">
+              <button class="btn-secondary" onclick="refreshOperators()" title="Refresh">🔄</button>
+            </div>
+          </div>
+          <div class="operators-grid" id="operators-grid">
+            <div class="loading-state">Loading operators...</div>
+          </div>
+
+          <div
+            class="roles-legend"
+            style="margin-top: 20px; padding: 16px; background: var(--bg); border-radius: 8px"
+          >
+            <div
+              style="
+                font-size: 0.75rem;
+                color: var(--text-muted);
+                margin-bottom: 12px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+              "
+            >
+              Permission Levels
+            </div>
+            <div style="display: flex; gap: 24px; flex-wrap: wrap">
+              <div style="display: flex; align-items: center; gap: 8px">
+                <span
+                  style="
+                    width: 12px;
+                    height: 12px;
+                    border-radius: 50%;
+                    background: linear-gradient(135deg, #ffd700, #ff8c00);
+                  "
+                ></span>
+                <span style="font-size: 0.85rem">Owner</span>
+                <span style="font-size: 0.7rem; color: var(--text-muted)">Full control</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px">
+                <span
+                  style="
+                    width: 12px;
+                    height: 12px;
+                    border-radius: 50%;
+                    background: linear-gradient(135deg, #a371f7, #8957e5);
+                  "
+                ></span>
+                <span style="font-size: 0.85rem">Admin</span>
+                <span style="font-size: 0.7rem; color: var(--text-muted)"
+                  >Manage users & settings</span
+                >
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px">
+                <span
+                  style="
+                    width: 12px;
+                    height: 12px;
+                    border-radius: 50%;
+                    background: linear-gradient(135deg, #58a6ff, #388bfd);
+                  "
+                ></span>
+                <span style="font-size: 0.85rem">User</span>
+                <span style="font-size: 0.7rem; color: var(--text-muted)">Dashboard access</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- About Section -->
+        <div class="section" id="about-section">
+          <div class="section-header">
+            <div class="section-title">ℹ️ About</div>
+          </div>
+          <div class="vitals-panel">
+            <div style="text-align: center; padding: 20px 0">
+              <div style="font-size: 3rem; margin-bottom: 12px">🦞</div>
+              <h2 style="font-size: 1.5rem; font-weight: 600; margin-bottom: 8px">
+                OpenClaw Command Center
+              </h2>
+              <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px">
+                A Starcraft-inspired dashboard for OpenClaw orchestration
+              </p>
+
+              <div style="display: flex; justify-content: center; gap: 12px; margin-bottom: 24px">
+                <span
+                  style="
+                    padding: 4px 12px;
+                    background: var(--bg);
+                    border-radius: 12px;
+                    font-size: 0.75rem;
+                  "
+                  >v0.1.0</span
+                >
+                <span
+                  style="
+                    padding: 4px 12px;
+                    background: rgba(63, 185, 80, 0.15);
+                    color: var(--green);
+                    border-radius: 12px;
+                    font-size: 0.75rem;
+                  "
+                  >MIT License</span
+                >
+              </div>
+
+              <div style="margin-bottom: 24px">
+                <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px">
+                  BUILT BY
+                </div>
+                <a
+                  href="https://github.com/openclaw"
+                  target="_blank"
+                  style="color: var(--accent); text-decoration: none; font-size: 1rem"
+                >
+                  OpenClaw
+                </a>
+              </div>
+
+              <div style="display: flex; justify-content: center; gap: 16px; flex-wrap: wrap">
+                <a
+                  href="https://github.com/openclaw"
+                  target="_blank"
+                  class="link-tag github"
+                  style="padding: 8px 16px"
+                >
+                  🐙 GitHub
+                </a>
+                <a
+                  href="https://github.com/openclaw"
+                  target="_blank"
+                  class="link-tag"
+                  style="padding: 8px 16px"
+                >
+                  🐦 Twitter
+                </a>
+                <a
+                  href="https://openclaw.ai"
+                  target="_blank"
+                  class="link-tag"
+                  style="padding: 8px 16px"
+                >
+                  🦞 OpenClaw
+                </a>
+              </div>
+            </div>
+
+            <div style="border-top: 1px solid var(--border); padding-top: 20px; margin-top: 20px">
+              <div
+                style="
+                  font-size: 0.75rem;
+                  color: var(--text-muted);
+                  margin-bottom: 12px;
+                  text-align: center;
+                "
+              >
+                INSPIRED BY
+              </div>
+              <div
+                style="
+                  display: flex;
+                  justify-content: center;
+                  gap: 20px;
+                  flex-wrap: wrap;
+                  font-size: 0.85rem;
+                  color: var(--text-muted);
+                "
+              >
+                <span>🎮 Starcraft</span>
+                <span>📊 iStatMenus</span>
+                <span>💾 DaisyDisk</span>
+                <span>📧 Gmail</span>
+                <span>🧠 Inside Out</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <div class="refresh-bar">
+        <span id="refresh-mode">Real-time updates via SSE</span> • Last updated:
+        <span id="last-updated"
+          ><span class="loading-dots"><span></span><span></span><span></span></span
+        ></span>
+      </div>
+    </div>
+
+    <!-- Detail Panel -->
+    <div id="detail-overlay" class="detail-overlay hidden" onclick="closeDetail()"></div>
+    <div id="detail-panel" class="detail-panel hidden">
+      <div class="detail-header">
+        <h2 id="detail-title">Session Details</h2>
+        <button class="close-btn" onclick="closeDetail()">✕</button>
+      </div>
+      <div class="detail-content">
+        <div class="detail-section">
+          <h3>📊 Overview</h3>
+          <div class="detail-box" id="detail-overview"></div>
+        </div>
+        <div class="detail-section">
+          <h3>📝 Summary</h3>
+          <div class="detail-box" id="detail-summary"></div>
+        </div>
+        <div class="detail-section">
+          <h3>🔗 References</h3>
+          <div class="detail-box" id="detail-links"></div>
+        </div>
+        <div class="detail-section attention">
+          <h3>⚠️ Needs Attention</h3>
+          <div class="detail-box" id="detail-attention"></div>
+        </div>
+        <div class="detail-section">
+          <h3>🎯 Key Facts</h3>
+          <div class="detail-box" id="detail-facts"></div>
+        </div>
+        <div class="detail-section">
+          <h3>🔧 Tools Used</h3>
+          <div class="detail-box" id="detail-tools"></div>
+        </div>
+        <div class="detail-section">
+          <h3>💬 Recent Messages</h3>
+          <div class="detail-box" id="detail-messages"></div>
+        </div>
+        <!-- Future: Read-Write Controls -->
+        <div class="detail-actions" id="detail-actions" style="display: none">
+          <button class="action-btn" disabled title="Coming soon">💬 Send Message</button>
+          <button class="action-btn" disabled title="Coming soon">🔄 Refresh</button>
+          <button class="action-btn danger" disabled title="Coming soon">🗑️ Clear Session</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // State
+      // Filter state for each section
+      let sessionFilters = { status: "all", channel: "all", kind: "all" };
+      let cronFilters = { status: "all", schedule: "all" };
+      let memoryFilters = { type: "all", age: "all" };
+      let currentFilter = "all"; // Legacy, for backwards compat
+      let sessionsData = [];
+      let cronData = [];
+      let sidebarCollapsed = false;
+      let paginationState = {
+        page: 1,
+        pageSize: 20,
+        total: 0,
+        totalPages: 0,
+        hasNext: false,
+        hasPrev: false,
+      };
+
+      // Utility functions
+      function formatTimeAgo(mins) {
+        if (mins < 1) return "now";
+        if (mins < 60) return `${mins}m`;
+        if (mins < 1440) return `${Math.round(mins / 60)}h`;
+        return `${Math.round(mins / 1440)}d`;
+      }
+
+      function escapeHtml(text) {
+        const div = document.createElement("div");
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      // Sidebar toggle
+      function toggleSidebar() {
+        sidebarCollapsed = !sidebarCollapsed;
+        document.getElementById("sidebar").classList.toggle("collapsed", sidebarCollapsed);
+        document
+          .getElementById("main-wrapper")
+          .classList.toggle("sidebar-collapsed", sidebarCollapsed);
+        document.getElementById("sidebar-toggle-btn").textContent = sidebarCollapsed ? "▶" : "◀";
+      }
+
+      // Navigation
+      document.querySelectorAll(".nav-item[data-section]").forEach((item) => {
+        item.addEventListener("click", function (e) {
+          document.querySelectorAll(".nav-item").forEach((i) => i.classList.remove("active"));
+          this.classList.add("active");
+        });
+      });
+
+      // Filter functions - Session filters
+      function setSessionFilter(group, value) {
+        sessionFilters[group] = value;
+        currentFilter = value; // Legacy compat
+
+        // Update button states for this group
+        document.querySelectorAll(`[data-group="session-${group}"]`).forEach((btn) => {
+          btn.classList.toggle("active", btn.dataset.filter === value);
+        });
+
+        // Status filter is server-side, others are client-side
+        if (group === "status") {
+          // Reset to page 1 and fetch with new filter (server-side)
+          paginationState.page = 1;
+          fetchSessions(1);
+        } else {
+          // Channel/kind filters remain client-side for now
+          applySessionFilters();
+        }
+      }
+
+      function applySessionFilters() {
+        // Client-side filtering for channel and kind only
+        // Status is now handled server-side
+        document.querySelectorAll(".session-card").forEach((card) => {
+          const channel = card.dataset.channel;
+          const kind = card.dataset.kind;
+
+          let showChannel = sessionFilters.channel === "all" || channel === sessionFilters.channel;
+          let showKind = sessionFilters.kind === "all" || kind === sessionFilters.kind;
+
+          card.classList.toggle("hidden-by-filter", !(showChannel && showKind));
+        });
+      }
+
+      // Cron filters
+      function setCronFilter(group, value) {
+        cronFilters[group] = value;
+
+        document.querySelectorAll(`[data-group="cron-${group}"]`).forEach((btn) => {
+          btn.classList.toggle("active", btn.dataset.filter === value);
+        });
+        applyCronFilters();
+      }
+
+      function applyCronFilters() {
+        document.querySelectorAll(".cron-item").forEach((item) => {
+          const enabled = item.dataset.enabled === "true";
+          const schedule = item.dataset.schedule;
+
+          let showStatus =
+            cronFilters.status === "all" ||
+            (cronFilters.status === "enabled" && enabled) ||
+            (cronFilters.status === "disabled" && !enabled);
+          let showSchedule = cronFilters.schedule === "all" || schedule === cronFilters.schedule;
+
+          item.classList.toggle("hidden-by-filter", !(showStatus && showSchedule));
+        });
+      }
+
+      // Memory filters
+      function setMemoryFilter(group, value) {
+        memoryFilters[group] = value;
+
+        document.querySelectorAll(`[data-group="memory-${group}"]`).forEach((btn) => {
+          btn.classList.toggle("active", btn.dataset.filter === value);
+        });
+        applyMemoryFilters();
+      }
+
+      function applyMemoryFilters() {
+        document.querySelectorAll(".memory-item").forEach((item) => {
+          const type = item.dataset.type;
+          const age = item.dataset.age;
+
+          let showType = memoryFilters.type === "all" || type === memoryFilters.type;
+          let showAge = memoryFilters.age === "all" || age === memoryFilters.age;
+
+          item.classList.toggle("hidden-by-filter", !(showType && showAge));
+        });
+      }
+
+      // Legacy filter function (backwards compat)
+      function setFilter(filter) {
+        setSessionFilter("status", filter);
+      }
+
+      function applyFilter() {
+        applySessionFilters();
+      }
+
+      function updateFilterCounts(sessions) {
+        const counts = { all: sessions.length, live: 0, recent: 0, idle: 0 };
+        sessions.forEach((s) => {
+          if (s.active) counts.live++;
+          else if (s.recentlyActive) counts.recent++;
+          else counts.idle++;
+        });
+
+        document.getElementById("filter-all-count").textContent = counts.all;
+        document.getElementById("filter-live-count").textContent = counts.live;
+        document.getElementById("filter-recent-count").textContent = counts.recent;
+        document.getElementById("filter-idle-count").textContent = counts.idle;
+      }
+
+      // Use server-provided counts for ALL sessions (across all pages)
+      function updateFilterCountsFromServer(statusCounts) {
+        document.getElementById("filter-all-count").textContent = statusCounts.all || 0;
+        document.getElementById("filter-live-count").textContent = statusCounts.live || 0;
+        document.getElementById("filter-recent-count").textContent = statusCounts.recent || 0;
+        document.getElementById("filter-idle-count").textContent = statusCounts.idle || 0;
+      }
+
+      // Extract links from text
+      function extractLinks(text) {
+        const links = [];
+
+        // Linear: JON-123
+        const linearMatches = text.match(/\b([A-Z]{2,5}-\d+)\b/g) || [];
+        linearMatches.forEach((m) => {
+          if (!links.find((l) => l.id === m)) {
+            links.push({ type: "linear", id: m, url: `https://linear.app/YOUR_TEAM/issue/${m}` });
+          }
+        });
+
+        // GitHub PRs/Issues: #123 or owner/repo#123
+        const ghMatches = text.match(/(?:[\w-]+\/[\w-]+)?#\d+/g) || [];
+        ghMatches.forEach((m) => {
+          if (!links.find((l) => l.id === m)) {
+            links.push({ type: "github", id: m, url: null });
+          }
+        });
+
+        // File paths: ~/path or /path
+        const fileMatches = text.match(/(?:~\/|\/Users\/|\/home\/)[^\s\)\"\']+/g) || [];
+        fileMatches.forEach((m) => {
+          const short = m.split("/").slice(-2).join("/");
+          if (!links.find((l) => l.id === short)) {
+            links.push({ type: "file", id: short, path: m });
+          }
+        });
+
+        // Slack threads
+        if (text.includes("slack") || text.includes("thread")) {
+          links.push({ type: "slack", id: "Slack thread", url: null });
+        }
+
+        return links.slice(0, 5);
+      }
+
+      // Fetch sessions with pagination and server-side filtering
+      async function fetchSessions(page = 1) {
+        // Build URL with status filter
+        const statusFilter = sessionFilters.status;
+        let url = `/api/sessions?page=${page}&pageSize=${paginationState.pageSize}`;
+        if (statusFilter && statusFilter !== "all") {
+          url += `&status=${statusFilter}`;
+        }
+
+        try {
+          const response = await fetch(url);
+          const data = await response.json();
+          if (data?.sessions) {
+            renderSessions(data.sessions, data.pagination, data.statusCounts);
+            if (data.tokenStats) renderTokenStats(data.tokenStats);
+            if (data.capacity) renderCapacity(data.capacity);
+          }
+          return data;
+        } catch (e) {
+          console.error("Failed to fetch sessions:", e);
+          return null;
+        }
+      }
+
+      // Change page
+      function changePage(delta) {
+        const newPage = paginationState.page + delta;
+        if (newPage < 1 || newPage > paginationState.totalPages) return;
+        paginationState.page = newPage;
+        fetchSessions(newPage);
+      }
+
+      // Go to specific page
+      function goToPage(page) {
+        if (page < 1 || page > paginationState.totalPages) return;
+        paginationState.page = page;
+        fetchSessions(page);
+      }
+
+      // Render pagination controls
+      function renderPagination(pagination) {
+        if (!pagination || pagination.total <= pagination.pageSize) {
+          document.getElementById("sessions-pagination").style.display = "none";
+          return;
+        }
+
+        paginationState = { ...paginationState, ...pagination };
+
+        const paginationEl = document.getElementById("sessions-pagination");
+        const pagesEl = document.getElementById("pagination-pages");
+        const prevBtn = document.getElementById("pagination-prev");
+        const nextBtn = document.getElementById("pagination-next");
+        const infoEl = document.getElementById("pagination-info");
+
+        paginationEl.style.display = "flex";
+
+        // Update prev/next buttons
+        prevBtn.disabled = !pagination.hasPrev;
+        nextBtn.disabled = !pagination.hasNext;
+
+        // Update info
+        const start = (pagination.page - 1) * pagination.pageSize + 1;
+        const end = Math.min(pagination.page * pagination.pageSize, pagination.total);
+        infoEl.textContent = `${start}-${end} of ${pagination.total}`;
+
+        // Build page buttons (show max 7 pages with ellipsis)
+        let pages = [];
+        const total = pagination.totalPages;
+        const current = pagination.page;
+
+        if (total <= 7) {
+          // Show all pages
+          for (let i = 1; i <= total; i++) pages.push(i);
+        } else {
+          // Show: 1 ... current-1 current current+1 ... total
+          pages.push(1);
+          if (current > 3) pages.push("...");
+          for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) {
+            pages.push(i);
+          }
+          if (current < total - 2) pages.push("...");
+          if (total > 1) pages.push(total);
+        }
+
+        pagesEl.innerHTML = pages
+          .map((p) => {
+            if (p === "...") {
+              return '<span class="pagination-ellipsis">...</span>';
+            }
+            const activeClass = p === current ? "active" : "";
+            return `<button class="pagination-page ${activeClass}" onclick="goToPage(${p})">${p}</button>`;
+          })
+          .join("");
+      }
+
+      // Fetch and render data (progressive loading)
+      async function fetchData() {
+        // Fire off all requests in parallel
+        const sessionsPromise = fetchSessions(paginationState.page);
+        const cronPromise = fetch("/api/cron")
+          .then((r) => r.json())
+          .catch((e) => {
+            console.error("Failed to fetch cron:", e);
+            return null;
+          });
+        const vitalsPromise = fetch("/api/vitals")
+          .then((r) => r.json())
+          .catch((e) => {
+            console.error("Failed to fetch vitals:", e);
+            return null;
+          });
+        const llmPromise = fetch("/api/llm-usage")
+          .then((r) => r.json())
+          .catch((e) => {
+            console.error("Failed to fetch LLM usage:", e);
+            return null;
+          });
+        const statusPromise = fetch("/api/status")
+          .then((r) => r.json())
+          .catch((e) => {
+            console.error("Failed to fetch status:", e);
+            return null;
+          });
+        const operatorsPromise = fetch("/api/operators")
+          .then((r) => r.json())
+          .catch((e) => {
+            console.error("Failed to fetch operators:", e);
+            return null;
+          });
+        const jobsPromise = fetch("/api/jobs")
+          .then((r) => r.json())
+          .catch((e) => {
+            console.error("Failed to fetch jobs:", e);
+            return null;
+          });
+        const cerebroPromise = fetch("/api/cerebro")
+          .then((r) => r.json())
+          .catch((e) => {
+            console.error("Failed to fetch Cerebro:", e);
+            return null;
+          });
+        const subagentsPromise = fetch("/api/subagents")
+          .then((r) => r.json())
+          .catch((e) => {
+            console.error("Failed to fetch subagents:", e);
+            return null;
+          });
+
+        // Render each section as it arrives (don't wait for slow ones)
+
+        // Fast: Vitals (renders immediately)
+        vitalsPromise.then((data) => {
+          if (data?.vitals) renderVitals(data.vitals);
+        });
+
+        // Fast: Sessions (~1s) - now handled by fetchSessions() which already renders
+        // sessionsPromise is the result of fetchSessions() so no .then needed
+
+        // Fast: LLM usage
+        llmPromise.then((data) => {
+          if (data) renderLlmUsage(data);
+        });
+
+        // Fast: Operators
+        operatorsPromise.then((data) => {
+          if (data) renderOperators(data);
+        });
+
+        // Fast: Jobs count (just for nav badge)
+        jobsPromise.then((data) => {
+          if (data?.jobs) {
+            document.getElementById("nav-jobs-count").textContent = data.jobs.length;
+          }
+        });
+
+        // Fast: Cerebro (API returns cerebro data directly)
+        cerebroPromise.then((data) => {
+          if (data) renderCerebro(data);
+        });
+
+        // Fast: Sub-agents
+        subagentsPromise.then((data) => {
+          if (data?.subagents) renderSubagents(data.subagents);
+        });
+
+        // Slow: Cron (~11s) - don't block other content
+        cronPromise.then((data) => {
+          if (data?.cron) renderCron(data.cron);
+        });
+
+        // Full status (backup, includes everything)
+        statusPromise.then((data) => {
+          if (data) {
+            // Only render things that haven't been rendered yet
+            if (data.memory) renderMemory(data.memory);
+            if (data.cerebro) renderCerebro(data.cerebro);
+            if (data.system) renderSystem(data.system);
+            if (data.activity) renderActivity(data.activity);
+          }
+          const now = new Date().toLocaleTimeString();
+          document.getElementById("last-updated").textContent = now;
+          document.getElementById("sidebar-updated").textContent = `Updated: ${now}`;
+        });
+      }
+
+      // Render just sessions (for progressive loading)
+      function renderSessions(sessions, pagination, statusCounts) {
+        const sessionsEl = document.getElementById("sessions");
+        sessionsData = sessions;
+
+        // Update pagination state if provided
+        if (pagination) {
+          paginationState = { ...paginationState, ...pagination };
+          renderPagination(pagination);
+        }
+
+        // Always use paginationState.total if we have it (survives SSE updates)
+        // Only fall back to sessions.length if we've never received pagination data
+        const displayCount = paginationState.total > 0 ? paginationState.total : sessions.length;
+        document.getElementById("session-count").textContent = displayCount;
+        document.getElementById("nav-session-count").textContent = displayCount;
+
+        // Use server-provided statusCounts for ALL sessions, not just current page
+        // If statusCounts not provided, keep previous values (don't overwrite with wrong counts)
+        if (statusCounts) {
+          updateFilterCountsFromServer(statusCounts);
+        }
+        // Removed: fallback to updateFilterCounts(sessions) which only counted current page
+
+        if (sessions.length === 0) {
+          sessionsEl.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📡</div>
+                        <div class="empty-state-text">No active sessions</div>
+                    </div>
+                `;
+        } else {
+          sessionsEl.innerHTML = sessions
+            .sort((a, b) => a.minutesAgo - b.minutesAgo)
+            .map((s) => {
+              const iconClass =
+                s.channel === "slack" ? "slack" : s.channel === "telegram" ? "telegram" : "main";
+              const icon = s.channel === "slack" ? "💬" : s.channel === "telegram" ? "📱" : "🏠";
+              const badgeClass = s.active
+                ? "badge-live"
+                : s.recentlyActive
+                  ? "badge-recent"
+                  : "badge-idle";
+              const badgeText = s.active ? "● Live" : formatTimeAgo(s.minutesAgo);
+              const tokenClass = s.tokens > 100000 ? "high" : s.tokens > 50000 ? "med" : "";
+              const model = s.model?.replace("claude-", "")?.replace("anthropic/", "") || "";
+              const cardClass = s.active ? "active" : s.recentlyActive ? "recent-active" : "";
+              const status = s.active ? "live" : s.recentlyActive ? "recent" : "idle";
+
+              // Generate topic pills
+              let topicHtml = "";
+              if (s.topic) {
+                const topics = s.topic
+                  .split(", ")
+                  .map((t) => t.trim())
+                  .filter((t) => t);
+                if (topics.length > 0) {
+                  const pills = topics
+                    .map((t) => {
+                      const className = t.toLowerCase().replace(/[^a-z]/g, "");
+                      return `<span class="topic-pill ${className}">${escapeHtml(t)}</span>`;
+                    })
+                    .join("");
+                  topicHtml = `<div class="card-topics">${pills}</div>`;
+                }
+              }
+              const previewHtml = s.preview
+                ? `<div class="card-preview">${escapeHtml(s.preview)}</div>`
+                : "";
+              const cerebroTagHtml = s.cerebroTopic
+                ? `<span class="cerebro-tag" title="Cerebro topic: ${escapeHtml(s.cerebroTopic)}">🏷️ ${escapeHtml(s.cerebroTopic)}</span>`
+                : "";
+
+              // Originator info
+              let originatorHtml = "";
+              if (s.originator) {
+                const displayName = s.originator.displayName || s.originator.username || "Unknown";
+                const initial = displayName.charAt(0).toUpperCase();
+                originatorHtml = `
+                            <div class="session-originator">
+                                <span class="originator-avatar">${initial}</span>
+                                <span>${escapeHtml(displayName)}</span>
+                            </div>
+                        `;
+              }
+
+              // Activity state indicator
+              const activityState = s.activityState || { state: "idle", icon: "💤", label: "Idle" };
+              const activityHtml = `
+                        <div class="activity-wrapper" title="${activityState.label}">
+                            <span class="activity-indicator ${activityState.state}">${activityState.icon}</span>
+                            <span class="activity-label">${activityState.label}</span>
+                        </div>
+                    `;
+
+              // Build metrics bar (fitness tracker style)
+              const m = s.metrics || { burnRate: 0, toolCalls: 0, minutesActive: 0 };
+              const burnRateClass = m.burnRate > 5000 ? "hot" : "";
+              const burnRateFormatted =
+                m.burnRate > 1000 ? (m.burnRate / 1000).toFixed(1) + "k" : m.burnRate;
+              const timeActiveFormatted =
+                m.minutesActive > 60
+                  ? Math.floor(m.minutesActive / 60) + "h " + (m.minutesActive % 60) + "m"
+                  : m.minutesActive + "m";
+
+              const metricsHtml = `
+                        <div class="metrics-bar">
+                            <div class="metric-ring burn ${burnRateClass}" title="Token burn rate: ${m.burnRate} tokens/min">
+                                <span class="metric-icon">🔥</span>
+                                <span class="metric-value">${burnRateFormatted}</span>
+                                <span class="metric-label">tok/min</span>
+                            </div>
+                            <div class="metric-ring tools" title="Tool calls this session: ${m.toolCalls}">
+                                <span class="metric-icon">🔧</span>
+                                <span class="metric-value">${m.toolCalls}</span>
+                                <span class="metric-label">tools</span>
+                            </div>
+                            <div class="metric-ring time" title="Time active: ${m.minutesActive} minutes">
+                                <span class="metric-icon">⏱️</span>
+                                <span class="metric-value">${timeActiveFormatted}</span>
+                                <span class="metric-label">active</span>
+                            </div>
+                        </div>
+                    `;
+
+              return `
+                    <div class="session-card ${cardClass}" data-status="${status}" data-channel="${s.channel}" data-kind="${s.kind}" onclick="openDetail('${escapeHtml(s.sessionKey)}', '${escapeHtml(s.label)}')">
+                        <div class="card-header">
+                            <div class="card-icon ${iconClass}">${icon}</div>
+                            <div class="card-title-area">
+                                <div class="card-title">${escapeHtml(s.label)}</div>
+                                <div class="card-subtitle">${s.kind} • ${model}</div>
+                                ${originatorHtml}
+                            </div>
+                            ${activityHtml}
+                            <span class="card-badge ${badgeClass}">${badgeText}</span>
+                        </div>
+                        ${topicHtml}
+                        ${previewHtml}
+                        <div class="card-stats">
+                            ${cerebroTagHtml}
+                            <div class="card-stat ${tokenClass}">
+                                <span>🎫</span>
+                                <span class="card-stat-value">${(s.tokens / 1000).toFixed(1)}k</span>
+                            </div>
+                        </div>
+                        ${metricsHtml}
+                    </div>
+                    `;
+            })
+            .join("");
+        }
+
+        applyFilter();
+      }
+
+      // Render just cron jobs (for progressive loading)
+      function renderCron(cron) {
+        const cronEl = document.getElementById("cron-jobs");
+        document.getElementById("cron-count").textContent = cron.length;
+        document.getElementById("nav-cron-count").textContent = cron.length;
+
+        if (cron.length === 0) {
+          cronEl.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">⏰</div>
+                        <div class="empty-state-text">No scheduled jobs</div>
+                    </div>
+                `;
+        } else {
+          cronEl.innerHTML = cron
+            .map((c) => {
+              const humanSchedule = c.scheduleHuman
+                ? `<div class="cron-schedule-human">${escapeHtml(c.scheduleHuman)}</div>`
+                : "";
+              return `
+                    <div class="cron-card ${c.enabled === false ? "disabled" : ""}">
+                        <div class="cron-icon">⏰</div>
+                        <div class="cron-info">
+                            <div class="cron-name">${escapeHtml(c.name)}</div>
+                            <div class="cron-schedule">${c.schedule}</div>
+                            ${humanSchedule}
+                        </div>
+                        <div class="cron-meta">
+                            <span class="cron-status ${c.enabled !== false ? "enabled" : "disabled"}">
+                                ${c.enabled !== false ? "✓ Enabled" : "○ Disabled"}
+                            </span>
+                            <div class="cron-next">${c.nextRun}</div>
+                        </div>
+                    </div>
+                `;
+            })
+            .join("");
+        }
+      }
+
+      // Operators data store
+      let operatorsData = [];
+
+      // Render operators
+      function renderOperators(data) {
+        const operatorsEl = document.getElementById("operators-grid");
+        operatorsData = data.operators || [];
+
+        document.getElementById("nav-operator-count").textContent = operatorsData.length;
+
+        if (operatorsData.length === 0) {
+          operatorsEl.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">👥</div>
+                        <div class="empty-state-text">No operators configured</div>
+                        <div class="empty-state-hint" style="margin-top: 8px; font-size: 0.8rem; color: var(--text-muted);">
+                            Operators are auto-detected from session activity
+                        </div>
+                    </div>
+                `;
+        } else {
+          operatorsEl.innerHTML = operatorsData
+            .map((op) => {
+              const roleClass = op.role || "user";
+              const initial = (op.name || op.username || "?").charAt(0).toUpperCase();
+              const avatarHtml = op.avatar
+                ? `<img src="${escapeHtml(op.avatar)}" alt="${escapeHtml(op.name)}">`
+                : initial;
+
+              const activeSessions = op.stats?.activeSessions || 0;
+              const totalSessions = op.stats?.totalSessions || 0;
+
+              let lastSeenText = "Never";
+              if (op.stats?.lastSeen) {
+                const lastSeen = new Date(op.stats.lastSeen);
+                const minutesAgo = Math.floor((Date.now() - lastSeen.getTime()) / 60000);
+                lastSeenText = minutesAgo < 1 ? "Just now" : formatTimeAgo(minutesAgo);
+              }
+
+              return `
+                    <div class="operator-card role-${roleClass}">
+                        <div class="operator-header">
+                            <div class="operator-avatar">${avatarHtml}</div>
+                            <div class="operator-info">
+                                <div class="operator-name">${escapeHtml(op.name || op.username || "Unknown")}</div>
+                                <div class="operator-username">@${escapeHtml(op.username || op.id)}</div>
+                            </div>
+                            <span class="operator-role ${roleClass}">${roleClass}</span>
+                        </div>
+                        <div class="operator-stats">
+                            <div class="operator-stat">
+                                <div class="operator-stat-value" style="color: ${activeSessions > 0 ? "var(--green)" : "var(--text-muted)"}">${activeSessions}</div>
+                                <div class="operator-stat-label">Active</div>
+                            </div>
+                            <div class="operator-stat">
+                                <div class="operator-stat-value">${totalSessions}</div>
+                                <div class="operator-stat-label">Sessions</div>
+                            </div>
+                            <div class="operator-stat">
+                                <div class="operator-stat-value" style="font-size: 0.9rem;">${lastSeenText}</div>
+                                <div class="operator-stat-label">Last Seen</div>
+                            </div>
+                        </div>
+                    </div>
+                    `;
+            })
+            .join("");
+        }
+      }
+
+      // Refresh operators data
+      async function refreshOperators() {
+        try {
+          const res = await fetch("/api/operators");
+          const data = await res.json();
+          renderOperators(data);
+        } catch (e) {
+          console.error("Failed to fetch operators:", e);
+        }
+      }
+
+      // Render token stats
+      function renderTokenStats(stats) {
+        if (!stats) return;
+        document.getElementById("total-tokens").textContent = stats.total || "0";
+        document.getElementById("active-sessions").textContent = stats.activeCount || 0;
+        document.getElementById("input-tokens").textContent = stats.input || "0";
+        document.getElementById("output-tokens").textContent = stats.output || "0";
+        document.getElementById("est-cost").textContent = stats.estCost || "$0.00";
+        document.getElementById("nav-tokens").textContent = stats.total || "0";
+        document.getElementById("nav-cost").textContent = stats.estCost || "$0.00";
+      }
+
+      // Render capacity indicators
+      function renderCapacity(capacity) {
+        if (!capacity) return;
+        const mainEl = document.getElementById("main-capacity");
+        const subEl = document.getElementById("subagent-capacity");
+
+        if (mainEl && capacity.main) {
+          const mainPct =
+            capacity.main.max > 0 ? (capacity.main.active / capacity.main.max) * 100 : 0;
+          const mainColor =
+            mainPct > 80 ? "var(--red)" : mainPct > 50 ? "var(--yellow)" : "var(--green)";
+          mainEl.innerHTML = `<span style="color:${mainColor}">${capacity.main.active}</span>/${capacity.main.max}`;
+        }
+
+        if (subEl && capacity.subagent) {
+          const subPct =
+            capacity.subagent.max > 0
+              ? (capacity.subagent.active / capacity.subagent.max) * 100
+              : 0;
+          const subColor =
+            subPct > 80 ? "var(--red)" : subPct > 50 ? "var(--yellow)" : "var(--green)";
+          subEl.innerHTML = `<span style="color:${subColor}">${capacity.subagent.active}</span>/${capacity.subagent.max}`;
+        }
+      }
+
+      // Render system info (placeholder)
+      function renderSystem(system) {
+        // System rendering is handled by full status
+      }
+
+      // Render activity (placeholder)
+      function renderActivity(activity) {
+        // Activity rendering is handled by full status
+      }
+
+      function renderVitals(vitals) {
+        if (!vitals) return;
+
+        // Hostname & uptime
+        document.getElementById("vitals-hostname").textContent = vitals.hostname || "-";
+        document.getElementById("vitals-uptime").textContent = vitals.uptime || "-";
+
+        // CPU
+        const cpuPercent = vitals.cpu?.usage || 0;
+        document.getElementById("cpu-percent").textContent = cpuPercent + "%";
+        document.getElementById("cpu-bar").style.width = cpuPercent + "%";
+
+        // Color based on load
+        const cpuBar = document.getElementById("cpu-bar");
+        cpuBar.className =
+          "vital-bar-fill " + (cpuPercent > 80 ? "red" : cpuPercent > 50 ? "yellow" : "blue");
+
+        // Chip name
+        const chipEl = document.getElementById("cpu-chip");
+        if (vitals.cpu?.chip) {
+          chipEl.textContent = vitals.cpu.chip;
+        } else if (vitals.cpu?.brand) {
+          chipEl.textContent = vitals.cpu.brand;
+        } else {
+          chipEl.textContent = "";
+        }
+
+        // User/sys/idle breakdown
+        document.getElementById("cpu-user").textContent =
+          vitals.cpu?.userPercent?.toFixed(1) + "%" || "-";
+        document.getElementById("cpu-sys").textContent =
+          vitals.cpu?.sysPercent?.toFixed(1) + "%" || "-";
+        document.getElementById("cpu-idle").textContent =
+          vitals.cpu?.idlePercent?.toFixed(1) + "%" || "-";
+
+        const loadAvg = vitals.cpu?.loadAvg || [0, 0, 0];
+        document.getElementById("cpu-load-1").textContent = loadAvg[0]?.toFixed(2) || "-";
+        document.getElementById("cpu-load-5").textContent = loadAvg[1]?.toFixed(2) || "-";
+        document.getElementById("cpu-load-15").textContent = loadAvg[2]?.toFixed(2) || "-";
+        document.getElementById("cpu-cores").textContent = vitals.cpu?.cores || "-";
+
+        // Core topology (P-cores + E-cores)
+        const topologyEl = document.getElementById("cpu-topology");
+        if (vitals.cpu?.pCores && vitals.cpu?.eCores) {
+          topologyEl.textContent = `${vitals.cpu.pCores}P + ${vitals.cpu.eCores}E cores`;
+        } else {
+          topologyEl.textContent = "";
+        }
+
+        // Memory - Show "X% used" with "X of Y" summary
+        const memPercent = vitals.memory?.percent || 0;
+        document.getElementById("mem-percent").innerHTML =
+          memPercent + '% <small style="font-size:0.6em;opacity:0.7">used</small>';
+        document.getElementById("mem-bar").style.width = memPercent + "%";
+
+        const memBar = document.getElementById("mem-bar");
+        memBar.className =
+          "vital-bar-fill " + (memPercent > 90 ? "red" : memPercent > 75 ? "yellow" : "green");
+
+        // Show "68.8GB of 128GB" format
+        const memUsed = vitals.memory?.usedFormatted || "-";
+        const memTotal = vitals.memory?.totalFormatted || "-";
+        document.getElementById("mem-summary").textContent = memUsed + " of " + memTotal;
+        document.getElementById("mem-free").textContent = vitals.memory?.freeFormatted || "-";
+
+        // Memory pressure
+        const pressure = vitals.memory?.pressure || "normal";
+        const pressureEl = document.getElementById("mem-pressure");
+        pressureEl.textContent = pressure.charAt(0).toUpperCase() + pressure.slice(1);
+        pressureEl.className = "pressure-indicator " + pressure;
+
+        // Memory breakdown (active, wired, compressed, cached)
+        const formatMemBytes = (bytes) => {
+          if (!bytes) return "-";
+          const gb = bytes / (1024 * 1024 * 1024);
+          return gb >= 1 ? gb.toFixed(1) + " GB" : (gb * 1024).toFixed(0) + " MB";
+        };
+        document.getElementById("mem-active").textContent = formatMemBytes(vitals.memory?.active);
+        document.getElementById("mem-wired").textContent = formatMemBytes(vitals.memory?.wired);
+        document.getElementById("mem-compressed").textContent = formatMemBytes(
+          vitals.memory?.compressed,
+        );
+        document.getElementById("mem-cached").textContent = formatMemBytes(vitals.memory?.cached);
+
+        // Disk - Show "X% used" with "X of Y" summary
+        const diskPercent = vitals.disk?.percent || 0;
+        document.getElementById("disk-percent").innerHTML =
+          diskPercent + '% <small style="font-size:0.6em;opacity:0.7">used</small>';
+        document.getElementById("disk-bar").style.width = diskPercent + "%";
+
+        const diskBar = document.getElementById("disk-bar");
+        diskBar.className =
+          "vital-bar-fill " + (diskPercent > 90 ? "red" : diskPercent > 75 ? "yellow" : "green");
+
+        // Show "700GB of 1.8TB" format
+        const diskUsed = vitals.disk?.usedFormatted || "-";
+        const diskTotal = vitals.disk?.totalFormatted || "-";
+        document.getElementById("disk-summary").textContent = diskUsed + " of " + diskTotal;
+        document.getElementById("disk-free").textContent = vitals.disk?.freeFormatted || "-";
+
+        // Disk I/O stats
+        document.getElementById("disk-iops").textContent = vitals.disk?.iops?.toFixed(0) || "0";
+        document.getElementById("disk-throughput").textContent =
+          vitals.disk?.throughputMBps?.toFixed(2) || "0.00";
+        document.getElementById("disk-kbt").textContent =
+          vitals.disk?.kbPerTransfer?.toFixed(1) || "0.0";
+
+        // Temperature
+        const temp = vitals.temperature;
+        const tempNote = vitals.temperatureNote;
+        if (temp !== null && temp !== undefined && temp > 0) {
+          document.getElementById("temp-value").textContent = temp;
+          const tempStatus =
+            temp < 50 ? "Cool" : temp < 70 ? "Normal" : temp < 85 ? "Warm" : "Hot!";
+          const tempColor =
+            temp < 50
+              ? "var(--green)"
+              : temp < 70
+                ? "var(--text)"
+                : temp < 85
+                  ? "var(--yellow)"
+                  : "var(--red)";
+          document.getElementById("temp-value").style.color = tempColor;
+          document.getElementById("temp-status").textContent = tempStatus;
+        } else {
+          document.getElementById("temp-value").textContent = "-";
+          document.getElementById("temp-value").style.color = "var(--text-muted)";
+          if (tempNote) {
+            document.getElementById("temp-status").textContent = tempNote;
+          } else {
+            document.getElementById("temp-status").textContent = "Unavailable";
+          }
+        }
+      }
+
+      function renderLlmUsage(data) {
+        if (!data || data.error) {
+          document.getElementById("llm-sync-time").textContent = data?.needsSync
+            ? "Needs sync"
+            : "Error";
+          return;
+        }
+
+        // Sync time
+        if (data.claude?.lastSynced) {
+          const synced = new Date(data.claude.lastSynced);
+          const ago = Math.round((Date.now() - synced) / 60000);
+          document.getElementById("llm-sync-time").textContent =
+            ago < 60 ? `${ago}m ago` : `${Math.round(ago / 60)}h ago`;
+        }
+
+        // Routing summary - show task counts clearly
+        if (data.routing) {
+          const ct = data.routing.claudeTasks || 0;
+          const cx = data.routing.codexTasks || 0;
+          const total = data.routing.total || 0;
+          document.getElementById("llm-routing-summary").textContent =
+            total > 0 ? `${ct} Claude / ${cx} Codex (${total} tasks)` : "No coding tasks yet";
+        }
+
+        // Claude Session - Show USED as primary (bar fills with consumption)
+        const sessionRemaining = data.claude?.session?.remainingPct || 0;
+        const sessionUsed = data.claude?.session?.usedPct || 0;
+        document.getElementById("claude-session-pct").innerHTML =
+          sessionUsed + '% <small style="font-size:0.6em;opacity:0.7">used</small>';
+        document.getElementById("claude-session-bar").style.width = sessionUsed + "%";
+        document.getElementById("claude-session-remaining").textContent = sessionRemaining + "%";
+        document.getElementById("claude-session-reset").textContent =
+          data.claude?.session?.resetsIn || "-";
+
+        // Color based on used - red when nearly depleted (high usage)
+        const sessionBar = document.getElementById("claude-session-bar");
+        sessionBar.className =
+          "vital-bar-fill " + (sessionUsed > 80 ? "red" : sessionUsed > 50 ? "yellow" : "green");
+
+        // Claude Weekly - Show USED as primary
+        const weeklyRemaining = data.claude?.weekly?.remainingPct || 0;
+        const weeklyUsed = data.claude?.weekly?.usedPct || 0;
+        document.getElementById("claude-weekly-pct").innerHTML =
+          weeklyUsed + '% <small style="font-size:0.6em;opacity:0.7">used</small>';
+        document.getElementById("claude-weekly-bar").style.width = weeklyUsed + "%";
+        document.getElementById("claude-weekly-remaining").textContent = weeklyRemaining + "%";
+        document.getElementById("claude-weekly-reset").textContent =
+          data.claude?.weekly?.resets || "-";
+
+        const weeklyBar = document.getElementById("claude-weekly-bar");
+        weeklyBar.className =
+          "vital-bar-fill " + (weeklyUsed > 80 ? "red" : weeklyUsed > 50 ? "yellow" : "green");
+
+        // Also update the compact quota card (uses different element IDs)
+        const compactSessionEl = document.getElementById("claude-compact-session-pct");
+        const compactSessionBar = document.getElementById("claude-compact-session-bar");
+        if (compactSessionEl) compactSessionEl.textContent = sessionUsed + "%";
+        if (compactSessionBar) {
+          compactSessionBar.style.width = sessionUsed + "%";
+          compactSessionBar.className =
+            "quota-bar-fill " + (sessionUsed < 50 ? "low" : sessionUsed < 80 ? "medium" : "high");
+        }
+
+        const compactWeekEl = document.getElementById("claude-compact-week-pct");
+        const compactWeekBar = document.getElementById("claude-compact-week-bar");
+        if (compactWeekEl) compactWeekEl.textContent = weeklyUsed + "%";
+        if (compactWeekBar) {
+          compactWeekBar.style.width = weeklyUsed + "%";
+          compactWeekBar.className =
+            "quota-bar-fill " + (weeklyUsed < 50 ? "low" : weeklyUsed < 80 ? "medium" : "high");
+        }
+
+        // Sonnet Weekly - Show USED as primary
+        const sonnetRemaining = data.claude?.sonnet?.remainingPct || 0;
+        const sonnetUsed = data.claude?.sonnet?.usedPct || 0;
+        document.getElementById("sonnet-weekly-pct").innerHTML =
+          sonnetUsed + '% <small style="font-size:0.6em;opacity:0.7">used</small>';
+        document.getElementById("sonnet-weekly-bar").style.width = sonnetUsed + "%";
+        document.getElementById("sonnet-weekly-remaining").textContent = sonnetRemaining + "%";
+        document.getElementById("sonnet-weekly-reset").textContent =
+          data.claude?.sonnet?.resets || "-";
+
+        const sonnetBar = document.getElementById("sonnet-weekly-bar");
+        sonnetBar.className =
+          "vital-bar-fill " + (sonnetUsed > 80 ? "red" : sonnetUsed > 50 ? "yellow" : "green");
+
+        // Task Routing
+        const totalTasks = data.routing?.total || 0;
+        const claudeTasks = data.routing?.claudeTasks || 0;
+        const codexTasks = data.routing?.codexTasks || 0;
+        document.getElementById("codex-tasks").textContent = totalTasks + " total";
+        document.getElementById("claude-task-count").textContent = claudeTasks;
+        document.getElementById("codex-task-count").textContent = codexTasks;
+
+        // Codex floor status - shows if we're meeting the 20% minimum
+        const floorStatus = document.getElementById("codex-floor-status");
+        const codexPct = data.routing?.codexPct || 0;
+        const codexFloor = data.routing?.codexFloor || 20;
+        if (totalTasks === 0) {
+          floorStatus.className = "pressure-indicator";
+          floorStatus.textContent = `Codex ≥20%: No tasks yet`;
+        } else if (codexPct >= codexFloor) {
+          floorStatus.className = "pressure-indicator normal";
+          floorStatus.textContent = `Codex ≥20%: ✓ ${codexPct}%`;
+        } else {
+          floorStatus.className = "pressure-indicator warning";
+          floorStatus.textContent = `Codex ≥20%: ${codexPct}% (need more)`;
+        }
+      }
+
+      async function fetchRoutingStats() {
+        try {
+          const res = await fetch("/api/routing-stats?hours=24");
+          const data = await res.json();
+          renderRoutingStats(data);
+        } catch (e) {
+          console.error("Failed to fetch routing stats:", e);
+        }
+      }
+
+      function renderRoutingStats(data) {
+        if (!data || data.error) return;
+
+        const total = data.total_requests || 0;
+        const byModel = data.by_model || {};
+
+        // Total tasks
+        document.getElementById("total-routed-tasks").textContent = total + " (24h)";
+
+        // Count by model family
+        let claudeCount = 0,
+          codexCount = 0,
+          llamaCount = 0,
+          qwenCount = 0;
+        for (const [model, count] of Object.entries(byModel)) {
+          const m = model.toLowerCase();
+          if (m.includes("claude") || m.includes("opus") || m.includes("sonnet")) {
+            claudeCount += count;
+          } else if (m.includes("codex") || m.includes("gpt")) {
+            codexCount += count;
+          } else if (m.includes("llama")) {
+            llamaCount += count;
+          } else if (m.includes("qwen")) {
+            qwenCount += count;
+          }
+        }
+
+        document.getElementById("claude-task-count").textContent = claudeCount;
+        document.getElementById("codex-task-count").textContent = codexCount;
+        document.getElementById("llama-task-count").textContent = llamaCount;
+        document.getElementById("qwen-task-count").textContent = qwenCount;
+
+        // Latency
+        const avgLatency = data.avg_latency_ms || 0;
+        const latencyEl = document.getElementById("routing-latency");
+        if (avgLatency > 0) {
+          const latencySec = (avgLatency / 1000).toFixed(1);
+          latencyEl.textContent = `Avg latency: ${latencySec}s`;
+          latencyEl.className = "pressure-indicator " + (avgLatency > 30000 ? "warning" : "normal");
+        } else {
+          latencyEl.textContent = "Avg latency: -";
+        }
+      }
+
+      async function fetchLlmUsage() {
+        try {
+          const res = await fetch("/api/llm-usage");
+          const data = await res.json();
+          renderLlmUsage(data);
+          // Also fetch detailed routing stats
+          fetchRoutingStats();
+        } catch (e) {
+          console.error("Failed to fetch LLM usage:", e);
+        }
+      }
+
+      function renderDashboard(data) {
+        // Use the split render functions (avoids code duplication)
+        if (data.vitals) renderVitals(data.vitals);
+        if (data.sessions) renderSessions(data.sessions, data.pagination, data.statusCounts);
+        if (data.cron) renderCron(data.cron);
+        if (data.tokenStats) {
+          renderTokenStats(data.tokenStats);
+          // Also update the detailed stats
+          document.getElementById("total-tokens").textContent = data.tokenStats.total;
+          document.getElementById("input-tokens").textContent = data.tokenStats.input;
+          document.getElementById("output-tokens").textContent = data.tokenStats.output;
+          document.getElementById("active-sessions").textContent = data.tokenStats.activeCount;
+          document.getElementById("est-cost").textContent = data.tokenStats.estCost;
+          document.getElementById("nav-tokens").textContent = data.tokenStats.total;
+          document.getElementById("nav-cost").textContent = data.tokenStats.estCost;
+        }
+
+        // Capacity
+        if (data.capacity) renderCapacity(data.capacity);
+
+        // Memory
+        if (data.memory) {
+          renderMemory(data.memory);
+        }
+
+        // Cerebro
+        if (data.cerebro) {
+          renderCerebro(data.cerebro);
+        }
+      }
+
+      function renderMemory(memory) {
+        document.getElementById("memory-count").textContent = `${memory.totalFiles} files`;
+        document.getElementById("nav-memory-count").textContent = memory.totalFiles;
+
+        document.getElementById("memory-md-size").textContent = memory.memoryMdSizeFormatted || "-";
+        document.getElementById("memory-md-lines").textContent = memory.memoryMdLines || "-";
+
+        document.getElementById("memory-total-files").textContent = memory.totalFiles || "-";
+        document.getElementById("memory-total-size").textContent = memory.totalSizeFormatted || "-";
+
+        // Recent files
+        const recentEl = document.getElementById("memory-recent-files");
+        if (memory.recentFiles && memory.recentFiles.length > 0) {
+          recentEl.innerHTML = memory.recentFiles
+            .map(
+              (f) => `
+                    <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 0.8rem;">
+                        <span style="color: var(--accent);">📄 ${escapeHtml(f.name)}</span>
+                        <span style="color: var(--text-muted);">${f.sizeFormatted} • ${f.age}</span>
+                    </div>
+                `,
+            )
+            .join("");
+        } else {
+          recentEl.innerHTML =
+            '<em style="color: var(--text-muted); font-size: 0.8rem;">No memory files yet</em>';
+        }
+      }
+
+      // Cerebro rendering
+      function renderCerebro(cerebro) {
+        const notInitEl = document.getElementById("cerebro-not-initialized");
+        const initEl = document.getElementById("cerebro-initialized");
+
+        if (!cerebro || !cerebro.initialized) {
+          // Show not initialized state
+          notInitEl.style.display = "block";
+          initEl.style.display = "none";
+          document.getElementById("cerebro-count").textContent = "not initialized";
+          document.getElementById("nav-cerebro-count").textContent = "-";
+          return;
+        }
+
+        // Show initialized state
+        notInitEl.style.display = "none";
+        initEl.style.display = "block";
+
+        // Update counts
+        document.getElementById("cerebro-count").textContent = `${cerebro.topics.total} topics`;
+        document.getElementById("nav-cerebro-count").textContent = cerebro.topics.total;
+
+        document.getElementById("cerebro-active").textContent = cerebro.topics.active || 0;
+        document.getElementById("cerebro-resolved").textContent = cerebro.topics.resolved || 0;
+        document.getElementById("cerebro-parked").textContent = cerebro.topics.parked || 0;
+        document.getElementById("cerebro-total-topics").textContent = cerebro.topics.total || 0;
+
+        document.getElementById("cerebro-threads").textContent = cerebro.threads || 0;
+        document.getElementById("cerebro-orphans").textContent = cerebro.orphans || 0;
+
+        // Recent topics with action buttons
+        const recentEl = document.getElementById("cerebro-recent-topics");
+        if (cerebro.recentTopics && cerebro.recentTopics.length > 0) {
+          recentEl.innerHTML = cerebro.recentTopics
+            .map((t) => {
+              const statusIcon =
+                t.status === "active" ? "🟢" : t.status === "resolved" ? "✅" : "⏸️";
+              const statusColor =
+                t.status === "active"
+                  ? "var(--green)"
+                  : t.status === "resolved"
+                    ? "var(--accent)"
+                    : "var(--text-muted)";
+
+              // Action buttons based on status
+              let actionButtons = "";
+              if (t.status === "active") {
+                actionButtons = `
+                            <button class="topic-action-btn resolve" onclick="updateTopicStatus('${escapeHtml(t.name)}', 'resolved')" title="Mark as resolved">✓</button>
+                            <button class="topic-action-btn park" onclick="updateTopicStatus('${escapeHtml(t.name)}', 'parked')" title="Park topic">⏸</button>
+                        `;
+              } else {
+                actionButtons = `
+                            <button class="topic-action-btn reactivate" onclick="updateTopicStatus('${escapeHtml(t.name)}', 'active')" title="Reactivate topic">↩</button>
+                        `;
+              }
+
+              return `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.8rem;">
+                            <div style="display: flex; align-items: center; gap: 8px; flex: 1;">
+                                <span>${statusIcon}</span>
+                                <span style="color: ${statusColor};">${escapeHtml(t.title || t.name)}</span>
+                                ${t.threads > 0 ? `<span style="color: var(--text-muted); font-size: 0.7rem;">(${t.threads} threads)</span>` : ""}
+                            </div>
+                            <div class="topic-actions">
+                                ${actionButtons}
+                            </div>
+                            <span style="color: var(--text-muted); margin-left: 8px;">${t.age || "-"}</span>
+                        </div>
+                    `;
+            })
+            .join("");
+        } else {
+          recentEl.innerHTML =
+            '<em style="color: var(--text-muted); font-size: 0.8rem;">No active topics yet</em>';
+        }
+
+        // Last updated
+        const lastUpdatedEl = document.getElementById("cerebro-last-updated");
+        if (cerebro.lastUpdated) {
+          const date = new Date(cerebro.lastUpdated);
+          const now = new Date();
+          const diffMs = now - date;
+          const diffMins = Math.round(diffMs / 60000);
+          if (diffMins < 1) lastUpdatedEl.textContent = "just now";
+          else if (diffMins < 60) lastUpdatedEl.textContent = `${diffMins}m ago`;
+          else if (diffMins < 1440) lastUpdatedEl.textContent = `${Math.round(diffMins / 60)}h ago`;
+          else lastUpdatedEl.textContent = `${Math.round(diffMins / 1440)}d ago`;
+        } else {
+          lastUpdatedEl.textContent = "-";
+        }
+      }
+
+      async function refreshCerebro() {
+        try {
+          const res = await fetch("/api/cerebro");
+          const data = await res.json();
+          // API returns cerebro data directly
+          renderCerebro(data);
+        } catch (e) {
+          console.error("Failed to refresh Cerebro:", e);
+        }
+      }
+
+      // Detail panel
+      function openDetail(sessionKey, label) {
+        document.getElementById("detail-title").textContent = label;
+        document.getElementById("detail-panel").classList.remove("hidden");
+        document.getElementById("detail-panel").classList.add("visible");
+        document.getElementById("detail-overlay").classList.remove("hidden");
+        document.getElementById("detail-overlay").classList.add("visible");
+
+        // Loading state
+        ["overview", "summary", "links", "attention", "facts", "tools", "messages"].forEach(
+          (id) => {
+            document.getElementById(`detail-${id}`).innerHTML =
+              '<em style="color: var(--text-muted)">Loading...</em>';
+          },
+        );
+
+        fetchSessionDetail(sessionKey);
+      }
+
+      function closeDetail() {
+        document.getElementById("detail-panel").classList.remove("visible");
+        document.getElementById("detail-overlay").classList.remove("visible");
+        setTimeout(() => {
+          document.getElementById("detail-panel").classList.add("hidden");
+          document.getElementById("detail-overlay").classList.add("hidden");
+        }, 200);
+      }
+
+      async function fetchSessionDetail(key) {
+        try {
+          const res = await fetch(`/api/session?key=${encodeURIComponent(key)}`);
+          const data = await res.json();
+          renderDetail(data);
+        } catch (e) {
+          console.error("Failed to fetch detail:", e);
+        }
+      }
+
+      function renderDetail(data) {
+        // Update the title with the best available channel name
+        const titleEl = document.getElementById("detail-title");
+        const channelName = data.groupChannel || data.channel || "Session Details";
+        titleEl.textContent = channelName;
+
+        // Build cost display if available
+        const costDisplay = data.estCost
+          ? `<div class="detail-row"><span class="detail-label">Est. Cost</span><span class="detail-value">${data.estCost}</span></div>`
+          : "";
+
+        // Build cache display if we have cache data
+        const cacheDisplay =
+          data.cacheRead || data.cacheWrite
+            ? `<div class="detail-row"><span class="detail-label">Cache (R/W)</span><span class="detail-value">${(data.cacheRead || 0).toLocaleString()} / ${(data.cacheWrite || 0).toLocaleString()}</span></div>`
+            : "";
+
+        // Overview
+        document.getElementById("detail-overview").innerHTML = `
+                <div class="detail-row"><span class="detail-label">Channel</span><span class="detail-value">${data.channel || "-"}</span></div>
+                <div class="detail-row"><span class="detail-label">Model</span><span class="detail-value">${data.model || "-"}</span></div>
+                <div class="detail-row"><span class="detail-label">Total Tokens</span><span class="detail-value">${data.tokens?.toLocaleString() || "-"}</span></div>
+                <div class="detail-row"><span class="detail-label">Input / Output</span><span class="detail-value">${(data.inputTokens || 0).toLocaleString()} / ${(data.outputTokens || 0).toLocaleString()}</span></div>
+                ${cacheDisplay}
+                ${costDisplay}
+                <div class="detail-row"><span class="detail-label">Last Active</span><span class="detail-value">${data.lastActive || "-"}</span></div>
+            `;
+
+        // Summary
+        document.getElementById("detail-summary").innerHTML = data.summary || "<em>No summary</em>";
+
+        // Links/References
+        const allText = (data.messages || []).map((m) => m.text).join(" ");
+        const links = extractLinks(allText);
+        if (data.links) links.push(...data.links);
+
+        if (links.length > 0) {
+          document.getElementById("detail-links").innerHTML = links
+            .map((l) => {
+              const cls =
+                l.type === "linear"
+                  ? "linear"
+                  : l.type === "github"
+                    ? "github"
+                    : l.type === "file"
+                      ? "file"
+                      : "slack";
+              const icon =
+                l.type === "linear"
+                  ? "📋"
+                  : l.type === "github"
+                    ? "🐙"
+                    : l.type === "file"
+                      ? "📁"
+                      : "💬";
+              if (l.url) {
+                return `<a href="${l.url}" target="_blank" class="link-tag ${cls}">${icon} ${l.id}</a>`;
+              }
+              return `<span class="link-tag ${cls}">${icon} ${l.id}</span>`;
+            })
+            .join(" ");
+        } else {
+          document.getElementById("detail-links").innerHTML =
+            '<em style="color: var(--text-muted)">No references detected</em>';
+        }
+
+        // Needs Attention
+        if (data.needsAttention?.length > 0) {
+          document.getElementById("detail-attention").innerHTML = data.needsAttention
+            .map((a) => `<div class="attention-item">${escapeHtml(a)}</div>`)
+            .join("");
+        } else {
+          document.getElementById("detail-attention").innerHTML =
+            '<em style="color: var(--text-muted)">Nothing needs attention</em>';
+        }
+
+        // Facts
+        if (data.facts?.length > 0) {
+          document.getElementById("detail-facts").innerHTML = data.facts
+            .map((f) => `<div class="attention-item">✅ ${escapeHtml(f)}</div>`)
+            .join("");
+        } else {
+          document.getElementById("detail-facts").innerHTML =
+            '<em style="color: var(--text-muted)">No key facts</em>';
+        }
+
+        // Tools
+        if (data.tools?.length > 0) {
+          document.getElementById("detail-tools").innerHTML = data.tools
+            .map(
+              (t) =>
+                `<span class="tool-tag"><code>${t.name}</code> <span class="tool-count">×${t.count}</span></span>`,
+            )
+            .join("");
+        } else {
+          document.getElementById("detail-tools").innerHTML =
+            '<em style="color: var(--text-muted)">No tools used</em>';
+        }
+
+        // Messages
+        if (data.messages?.length > 0) {
+          document.getElementById("detail-messages").innerHTML = data.messages
+            .map(
+              (m) => `
+                    <div class="message-item">
+                        <div class="message-role ${m.role}">${m.role === "user" ? "👤 User" : "🦞 Assistant"}</div>
+                        <div class="message-text">${escapeHtml(m.text?.slice(0, 400) || "")}${m.text?.length > 400 ? "..." : ""}</div>
+                    </div>
+                `,
+            )
+            .join("");
+        } else {
+          document.getElementById("detail-messages").innerHTML =
+            '<em style="color: var(--text-muted)">No messages</em>';
+        }
+      }
+
+      // Keyboard shortcuts
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeDetail();
+        if (e.key === "b" && (e.metaKey || e.ctrlKey)) {
+          e.preventDefault();
+          toggleSidebar();
+        }
+      });
+
+      // ============================================================================
+      // SSE (Server-Sent Events) for real-time updates
+      // ============================================================================
+      let eventSource = null;
+      let sseConnected = false;
+      let sseReconnectAttempts = 0;
+      const SSE_MAX_RECONNECT_DELAY = 30000; // Max 30s between reconnects
+      let pollInterval = null;
+
+      function setConnectionStatus(status, message) {
+        const pill = document.getElementById("connection-status");
+        const statusText = document.getElementById("gateway-status");
+        const refreshMode = document.getElementById("refresh-mode");
+
+        pill.classList.remove("connected", "disconnected", "connecting");
+        pill.classList.add(status);
+        statusText.textContent = message;
+
+        // Update refresh bar mode indicator
+        if (status === "connected") {
+          refreshMode.textContent = "Real-time updates via SSE ⚡";
+        } else if (status === "disconnected") {
+          refreshMode.textContent = "Polling mode (SSE disconnected)";
+        } else {
+          refreshMode.textContent = "Connecting...";
+        }
+      }
+
+      function connectSSE() {
+        // Check for SSE support
+        if (typeof EventSource === "undefined") {
+          console.warn("[SSE] EventSource not supported, using polling fallback");
+          setConnectionStatus("connected", "Polling Mode");
+          startPolling();
+          return;
+        }
+
+        setConnectionStatus("connecting", "Connecting...");
+
+        try {
+          eventSource = new EventSource("/api/events");
+
+          eventSource.onopen = function () {
+            console.log("[SSE] Connected");
+            sseConnected = true;
+            sseReconnectAttempts = 0;
+            setConnectionStatus("connected", "🟢 Live");
+            stopPolling(); // Stop polling when SSE connects
+          };
+
+          eventSource.addEventListener("connected", function (e) {
+            try {
+              const data = JSON.parse(e.data);
+              console.log("[SSE] Server greeting:", data.message);
+            } catch (err) {}
+          });
+
+          eventSource.addEventListener("update", function (e) {
+            try {
+              const data = JSON.parse(e.data);
+              handleSSEUpdate(data);
+            } catch (err) {
+              console.error("[SSE] Failed to parse update:", err);
+            }
+          });
+
+          eventSource.addEventListener("heartbeat", function (e) {
+            try {
+              const data = JSON.parse(e.data);
+              console.log("[SSE] Heartbeat, clients:", data.clients);
+              // Update timestamp on heartbeat
+              const now = new Date().toLocaleTimeString();
+              document.getElementById("last-updated").textContent = now + " ⚡";
+              document.getElementById("sidebar-updated").textContent = `Live: ${now}`;
+            } catch (err) {}
+          });
+
+          eventSource.onerror = function (e) {
+            console.error("[SSE] Connection error");
+            sseConnected = false;
+            eventSource.close();
+            eventSource = null;
+            setConnectionStatus("disconnected", "🔴 Disconnected");
+
+            // Exponential backoff for reconnection
+            sseReconnectAttempts++;
+            const delay = Math.min(
+              1000 * Math.pow(2, sseReconnectAttempts - 1),
+              SSE_MAX_RECONNECT_DELAY,
+            );
+            console.log(`[SSE] Reconnecting in ${delay}ms (attempt ${sseReconnectAttempts})`);
+
+            // Start polling as fallback while disconnected
+            startPolling();
+
+            setTimeout(connectSSE, delay);
+          };
+        } catch (err) {
+          console.error("[SSE] Failed to create EventSource:", err);
+          setConnectionStatus("disconnected", "🔴 Error");
+          startPolling();
+        }
+      }
+
+      function handleSSEUpdate(data) {
+        // Update timestamp
+        const now = new Date().toLocaleTimeString();
+        document.getElementById("last-updated").textContent = now + " ⚡";
+        document.getElementById("sidebar-updated").textContent = `Live: ${now}`;
+
+        // Render all the data
+        if (data.vitals) renderVitals(data.vitals);
+        if (data.sessions) {
+          renderSessions(data.sessions, data.pagination, data.statusCounts);
+          if (data.tokenStats) renderTokenStats(data.tokenStats);
+          if (data.capacity) renderCapacity(data.capacity);
+        }
+        if (data.cron) renderCron(data.cron);
+        if (data.memory) renderMemory(data.memory);
+        if (data.cerebro) renderCerebro(data.cerebro);
+        if (data.llmUsage) renderLlmUsage(data.llmUsage);
+      }
+
+      // Polling fallback
+      function startPolling() {
+        if (pollInterval) return; // Already polling
+        console.log("[Polling] Starting fallback polling");
+        pollInterval = setInterval(fetchData, 30000);
+        fetchData(); // Immediate fetch
+      }
+
+      function stopPolling() {
+        if (pollInterval) {
+          console.log("[Polling] Stopping fallback polling (SSE connected)");
+          clearInterval(pollInterval);
+          pollInterval = null;
+        }
+      }
+
+      // Toast notifications
+      function showToast(message, type = "success") {
+        const container = document.getElementById("toast-container");
+        const toast = document.createElement("div");
+        toast.className = `toast ${type}`;
+        const icon = type === "success" ? "✅" : "❌";
+        toast.innerHTML = `<span>${icon}</span><span>${escapeHtml(message)}</span>`;
+        container.appendChild(toast);
+
+        setTimeout(() => {
+          toast.style.animation = "toast-out 0.3s ease forwards";
+          setTimeout(() => toast.remove(), 300);
+        }, 3000);
+      }
+
+      // Update topic status API call
+      async function updateTopicStatus(topicId, status) {
+        try {
+          const res = await fetch(`/api/cerebro/topic/${encodeURIComponent(topicId)}/status`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status }),
+          });
+
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.error || "Failed to update status");
+          }
+
+          showToast(`Topic "${data.topic.title}" marked as ${status}`);
+          // Refresh Cerebro data
+          refreshCerebro();
+        } catch (e) {
+          showToast(`Error: ${e.message}`, "error");
+        }
+      }
+
+      // Sub-agent Status Rendering
+      function renderSubagents(subagents) {
+        const grid = document.getElementById("subagent-grid");
+        const countElement = document.getElementById("subagent-count");
+
+        countElement.textContent = subagents.length;
+
+        if (subagents.length === 0) {
+          grid.innerHTML =
+            '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-muted); font-size: 0.9rem;">No active sub-agents</div>';
+          return;
+        }
+
+        grid.innerHTML = subagents
+          .map((s) => {
+            const ageMinutes = Math.round(s.ageMs / 60000);
+            const ageHours = Math.round(s.ageMs / 3600000);
+            const ageDisplay = ageMinutes < 60 ? `${ageMinutes}m` : `${ageHours}h`;
+            const statusClass = ageHours > 2 ? "stale" : s.tokens > 1000 ? "active" : "idle";
+            const statusText = statusClass.charAt(0).toUpperCase() + statusClass.slice(1);
+
+            return `
+                    <div class="subagent-card ${statusClass}">
+                        <div class="subagent-header">
+                            <div class="subagent-info">
+                                <h4>${escapeHtml(s.task || s.id)}</h4>
+                                <div class="subagent-meta">ID: ${s.shortId} • ${s.tokens} tokens • ${ageDisplay}</div>
+                            </div>
+                            <div class="subagent-status ${statusClass}">${statusText}</div>
+                        </div>
+                    </div>
+                `;
+          })
+          .join("");
+      }
+
+      // Enhanced Token Stats with Quota Visualization
+      function renderTokenQuotas(tokenStats, quotaData) {
+        if (!quotaData) return;
+
+        // Claude quotas (compact card)
+        if (quotaData.claude) {
+          const sessionPct = Math.round((quotaData.claude.sessionUsage || 0) * 100);
+          const weekPct = Math.round((quotaData.claude.weekUsage || 0) * 100);
+
+          document.getElementById("claude-compact-session-pct").textContent = `${sessionPct}%`;
+          document.getElementById("claude-compact-week-pct").textContent = `${weekPct}%`;
+
+          const sessionBar = document.getElementById("claude-compact-session-bar");
+          const weekBar = document.getElementById("claude-compact-week-bar");
+
+          sessionBar.style.width = `${sessionPct}%`;
+          weekBar.style.width = `${weekPct}%`;
+
+          // Color coding
+          sessionBar.className = `quota-bar-fill ${sessionPct < 50 ? "low" : sessionPct < 80 ? "medium" : "high"}`;
+          weekBar.className = `quota-bar-fill ${weekPct < 50 ? "low" : weekPct < 80 ? "medium" : "high"}`;
+        }
+
+        // Codex quotas
+        if (quotaData.codex) {
+          const h5Pct = Math.round((quotaData.codex.usage5h || 0) * 100);
+          const dayPct = Math.round((quotaData.codex.usageDay || 0) * 100);
+
+          document.getElementById("codex-5h-pct").textContent = `${h5Pct}%`;
+          document.getElementById("codex-day-pct").textContent = `${dayPct}%`;
+          document.getElementById("codex-tasks").textContent = quotaData.codex.tasksToday || 0;
+
+          const h5Bar = document.getElementById("codex-5h-bar");
+          const dayBar = document.getElementById("codex-day-bar");
+
+          h5Bar.style.width = `${h5Pct}%`;
+          dayBar.style.width = `${dayPct}%`;
+
+          h5Bar.className = `quota-bar-fill ${h5Pct < 50 ? "low" : h5Pct < 80 ? "medium" : "high"}`;
+          dayBar.className = `quota-bar-fill ${dayPct < 50 ? "low" : dayPct < 80 ? "medium" : "high"}`;
+        }
+      }
+
+      // Quick Actions
+      async function runHealthCheck() {
+        try {
+          const response = await fetch("/api/action", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "health-check" }),
+          });
+          const data = await response.json();
+
+          if (data.success) {
+            showToast("✅ Health check completed: " + data.output, "success");
+          } else {
+            showToast("❌ Health check failed: " + data.output, "error");
+          }
+        } catch (e) {
+          showToast("❌ Health check error: " + e.message, "error");
+        }
+      }
+
+      async function getGatewayStatus() {
+        try {
+          const response = await fetch("/api/action", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "gateway-status" }),
+          });
+          const data = await response.json();
+
+          if (data.success) {
+            showToast("🚪 Gateway: " + data.output, "success");
+          } else {
+            showToast("❌ Gateway status failed: " + data.output, "error");
+          }
+        } catch (e) {
+          showToast("❌ Gateway error: " + e.message, "error");
+        }
+      }
+
+      async function pruneStalesSessions() {
+        try {
+          const response = await fetch("/api/action", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "prune-stale" }),
+          });
+          const data = await response.json();
+
+          if (data.success) {
+            showToast("🧹 " + data.output, "success");
+          } else {
+            showToast("❌ Cleanup failed: " + data.output, "error");
+          }
+        } catch (e) {
+          showToast("❌ Cleanup error: " + e.message, "error");
+        }
+      }
+
+      // Toast notifications
+      function showToast(message, type = "success") {
+        const container = document.getElementById("toast-container");
+        if (!container) return;
+
+        const toast = document.createElement("div");
+        toast.className = `toast ${type}`;
+        const icon = type === "success" ? "✅" : "❌";
+        toast.innerHTML = `<span>${icon}</span><span>${escapeHtml(message)}</span>`;
+        container.appendChild(toast);
+
+        setTimeout(() => {
+          toast.style.animation = "toast-out 0.3s ease forwards";
+          setTimeout(() => toast.remove(), 300);
+        }, 3000);
+      }
+
+      // Init - try SSE first, fall back to polling
+      connectSSE();
+      // Also do an initial fetch to populate immediately
+      fetchData();
+    </script>
+
+    <!-- Toast notifications container -->
+    <div id="toast-container" class="toast-container"></div>
+  </body>
+</html>
