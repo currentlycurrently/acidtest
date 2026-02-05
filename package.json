@@ -24,11 +24,11 @@
     "prompt-injection",
     "ai-security"
   ],
-  "author": "",
+  "author": "Currently",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/YOURUSERNAME/acidtest"
+    "url": "https://github.com/currentlycurrently/acidtest"
   },
   "homepage": "https://acidtest.dev",
   "dependencies": {

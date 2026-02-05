@@ -2,20 +2,31 @@
 
 Security scanner for AI agent skills. Scan before you install.
 
+
+## The Problem
+
+The AgentSkills ecosystem has 66,000+ skills. Recent audits found:
+- **26%** contain at least one vulnerability
+- **230+** confirmed malicious skills uploaded to ClawHub in one week
+- **341** skills flagged in the ClawHavoc campaign
+
+AcidTest gives you a gut check before you install.
+
+
 ## Quick Start
 
 ```bash
 npx acidtest scan ./my-skill
 ```
 
-## What It Checks
+## What It Detects
 
-- **Permission mismatches** between declared and actual capabilities
-- **Prompt injection patterns** in skill instructions
-- **Undeclared network calls**, file access, and credential harvesting in handler code
+- **Prompt injection attempts**
+- **Undeclared network calls**
+- **Credential harvesting**
+- **Permission mismatches**
 - **Data exfiltration patterns**
-- **Obfuscated or encoded payloads**
-- **Supply chain risk indicators**
+- **Obfuscated payloads**
 
 ## Example Output
 
@@ -159,7 +170,7 @@ Detection patterns are stored as JSON files in `src/patterns/`. To add a new pat
 
 ```bash
 # Clone the repo
-git clone https://github.com/YOURUSERNAME/acidtest
+git clone https://github.com/currentlycurrently/acidtest
 cd acidtest
 
 # Install dependencies
@@ -190,5 +201,5 @@ MIT
 
 - Documentation: [CLAUDE.md](./CLAUDE.md)
 - Build Spec: [BUILD-SPEC.md](./BUILD-SPEC.md)
-- Issues: https://github.com/YOURUSERNAME/acidtest/issues
+- Issues: https://github.com/currentlycurrently/acidtest/issues
 - Website: https://acidtest.dev
