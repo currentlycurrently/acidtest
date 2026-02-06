@@ -18,7 +18,7 @@ No API keys. No configuration. No Python.
 
 ## Example Output
 ```
-AcidTest v0.1.0
+AcidTest v0.1.1
 
 Scanning: proactive-agent
 Source:   test-skills/proactive-agent-1-2-4-1
@@ -95,6 +95,12 @@ Detection patterns are JSON files in `src/patterns/`. Add new patterns and submi
 ## License
 
 MIT
+
+## Documentation
+
+- [Technical Specification](./BUILD-SPEC.md) - Architecture and implementation details
+- [Roadmap](./ROADMAP.md) - Planned features and enhancements
+- [Changelog](./CHANGELOG.md) - Version history
 
 ## Links
 

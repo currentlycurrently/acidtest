@@ -239,8 +239,9 @@ RECOMMENDATION: Do not install. Prompt injection attempt detected.
 
 ```json
 {
+  "schemaVersion": "1.0.0",
   "tool": "acidtest",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "skill": {
     "name": "skill-name",
     "path": "./path/to/skill"
@@ -315,6 +316,7 @@ interface Finding {
 }
 
 interface ScanResult {
+  schemaVersion: string; // API version (currently "1.0.0")
   tool: string;
   version: string;
   skill: { name: string; path: string };

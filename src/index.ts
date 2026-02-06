@@ -8,7 +8,7 @@
 import { scanSkill, scanAllSkills } from './scanner.js';
 import { reportToTerminal, reportAsJSON } from './reporter.js';
 
-const VERSION = '0.1.1';
+const VERSION = '0.1.2';
 
 /**
  * Main CLI function

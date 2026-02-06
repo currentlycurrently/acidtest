@@ -14,7 +14,7 @@ import { scanCode } from './layers/code.js';
 import { scanCrossReference } from './layers/crossref.js';
 import { calculateScore, determineStatus, generateRecommendation } from './scoring.js';
 
-const VERSION = '0.1.1';
+const VERSION = '0.1.2';
 
 /**
  * Main scan function
@@ -53,6 +53,7 @@ export async function scanSkill(skillPath: string): Promise<ScanResult> {
 
   // Build result with normalized permissions
   const result: ScanResult = {
+    schemaVersion: '1.0.0',
     tool: 'acidtest',
     version: VERSION,
     skill: {

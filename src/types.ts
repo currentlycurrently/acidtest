@@ -99,6 +99,7 @@ export interface LayerResult {
  * Complete scan result
  */
 export interface ScanResult {
+  schemaVersion: string;
   tool: string;
   version: string;
   skill: {
