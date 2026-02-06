@@ -3,18 +3,22 @@
  * Coordinates all four scanning layers
  */
 
-import { readFileSync, existsSync, statSync } from 'fs';
-import { join, basename, extname } from 'path';
-import { glob } from 'glob';
-import matter from 'gray-matter';
-import type { Skill, CodeFile, ScanResult, Finding } from './types.js';
-import { scanPermissions } from './layers/permissions.js';
-import { scanInjection } from './layers/injection.js';
-import { scanCode } from './layers/code.js';
-import { scanCrossReference } from './layers/crossref.js';
-import { calculateScore, determineStatus, generateRecommendation } from './scoring.js';
+import { readFileSync, existsSync, statSync } from "fs";
+import { join, basename, extname } from "path";
+import { glob } from "glob";
+import matter from "gray-matter";
+import type { Skill, CodeFile, ScanResult, Finding } from "./types.js";
+import { scanPermissions } from "./layers/permissions.js";
+import { scanInjection } from "./layers/injection.js";
+import { scanCode } from "./layers/code.js";
+import { scanCrossReference } from "./layers/crossref.js";
+import {
+  calculateScore,
+  determineStatus,
+  generateRecommendation,
+} from "./scoring.js";
 
-const VERSION = '0.1.2';
+const VERSION = "0.1.3";
 
 /**
  * Main scan function
@@ -33,7 +37,7 @@ export async function scanSkill(skillPath: string): Promise<ScanResult> {
   const previousFindings = [
     ...layer1.findings,
     ...layer2.findings,
-    ...layer3.findings
+    ...layer3.findings,
   ];
 
   const layer4 = await scanCrossReference(skill, previousFindings);
@@ -43,7 +47,7 @@ export async function scanSkill(skillPath: string): Promise<ScanResult> {
     ...layer1.findings,
     ...layer2.findings,
     ...layer3.findings,
-    ...layer4.findings
+    ...layer4.findings,
   ];
 
   // Calculate score and status
@@ -53,18 +57,18 @@ export async function scanSkill(skillPath: string): Promise<ScanResult> {
 
   // Build result with normalized permissions
   const result: ScanResult = {
-    schemaVersion: '1.0.0',
-    tool: 'acidtest',
+    schemaVersion: "1.0.0",
+    tool: "acidtest",
     version: VERSION,
     skill: {
       name: skill.name,
-      path: skill.path
+      path: skill.path,
     },
     score,
     status,
     permissions: normalizePermissions(skill.metadata),
     findings: allFindings,
-    recommendation
+    recommendation,
   };
 
   return result;
@@ -80,12 +84,12 @@ async function loadSkill(skillPath: string): Promise<Skill> {
   // Determine if path is a directory or file
   if (existsSync(skillPath) && statSync(skillPath).isDirectory()) {
     skillDir = skillPath;
-    skillMdPath = join(skillPath, 'SKILL.md');
-  } else if (basename(skillPath) === 'SKILL.md') {
+    skillMdPath = join(skillPath, "SKILL.md");
+  } else if (basename(skillPath) === "SKILL.md") {
     skillMdPath = skillPath;
-    skillDir = join(skillPath, '..');
+    skillDir = join(skillPath, "..");
   } else {
-    throw new Error('Path must be a skill directory or SKILL.md file');
+    throw new Error("Path must be a skill directory or SKILL.md file");
   }
 
   // Check if SKILL.md exists
@@ -94,7 +98,7 @@ async function loadSkill(skillPath: string): Promise<Skill> {
   }
 
   // Read and parse SKILL.md
-  const skillContent = readFileSync(skillMdPath, 'utf-8');
+  const skillContent = readFileSync(skillMdPath, "utf-8");
   const parsed = matter(skillContent);
 
   // Extract metadata and markdown
@@ -102,10 +106,7 @@ async function loadSkill(skillPath: string): Promise<Skill> {
   const markdownContent = parsed.content;
 
   // Determine skill name
-  const skillName =
-    metadata.name ||
-    basename(skillDir) ||
-    'unknown-skill';
+  const skillName = metadata.name || basename(skillDir) || "unknown-skill";
 
   // Find all code files (.ts, .js, .mjs, .cjs)
   const codeFiles = await findCodeFiles(skillDir);
@@ -115,14 +116,18 @@ async function loadSkill(skillPath: string): Promise<Skill> {
     path: skillPath,
     metadata,
     markdownContent,
-    codeFiles
+    codeFiles,
   };
 }
 
 /**
  * Normalize permissions to always have consistent structure
  */
-function normalizePermissions(metadata: any): { bins: string[]; env: string[]; tools: string[] } {
+function normalizePermissions(metadata: any): {
+  bins: string[];
+  env: string[];
+  tools: string[];
+} {
   // Handle bins
   let bins: string[] = [];
   if (metadata.bins) {
@@ -137,10 +142,10 @@ function normalizePermissions(metadata: any): { bins: string[]; env: string[]; t
 
   // Handle allowed-tools
   let tools: string[] = [];
-  if (metadata['allowed-tools']) {
-    tools = Array.isArray(metadata['allowed-tools'])
-      ? metadata['allowed-tools']
-      : [metadata['allowed-tools']];
+  if (metadata["allowed-tools"]) {
+    tools = Array.isArray(metadata["allowed-tools"])
+      ? metadata["allowed-tools"]
+      : [metadata["allowed-tools"]];
   }
 
   return { bins, env, tools };
@@ -154,50 +159,50 @@ async function findCodeFiles(skillDir: string): Promise<CodeFile[]> {
 
   // Search for .ts, .js, .mjs, .cjs files
   const patterns = [
-    join(skillDir, '**/*.ts'),
-    join(skillDir, '**/*.js'),
-    join(skillDir, '**/*.mjs'),
-    join(skillDir, '**/*.cjs')
+    join(skillDir, "**/*.ts"),
+    join(skillDir, "**/*.js"),
+    join(skillDir, "**/*.mjs"),
+    join(skillDir, "**/*.cjs"),
   ];
 
   for (const pattern of patterns) {
     try {
       const files = await glob(pattern, {
         ignore: [
-          '**/node_modules/**',
-          '**/dist/**',
-          '**/build/**',
-          '**/__tests__/**',
-          '**/tests/**',
-          '**/test/**',
-          '**/*.test.{js,ts,mjs,cjs}',
-          '**/*.spec.{js,ts,mjs,cjs}',
-          '**/fixtures/**',
-          '**/examples/**',
-          '**/.git/**',
-          '**/.cache/**',
-          '**/.next/**',
-          '**/.nuxt/**',
-          '**/.vite*/**'
-        ]
+          "**/node_modules/**",
+          "**/dist/**",
+          "**/build/**",
+          "**/__tests__/**",
+          "**/tests/**",
+          "**/test/**",
+          "**/*.test.{js,ts,mjs,cjs}",
+          "**/*.spec.{js,ts,mjs,cjs}",
+          "**/fixtures/**",
+          "**/examples/**",
+          "**/.git/**",
+          "**/.cache/**",
+          "**/.next/**",
+          "**/.nuxt/**",
+          "**/.vite*/**",
+        ],
       });
 
       for (const filePath of files) {
         try {
-          const content = readFileSync(filePath, 'utf-8');
+          const content = readFileSync(filePath, "utf-8");
           const ext = extname(filePath).slice(1); // Remove leading dot
 
           // Determine extension type
-          let extension: 'ts' | 'js' | 'mjs' | 'cjs';
-          if (ext === 'ts') extension = 'ts';
-          else if (ext === 'mjs') extension = 'mjs';
-          else if (ext === 'cjs') extension = 'cjs';
-          else extension = 'js';
+          let extension: "ts" | "js" | "mjs" | "cjs";
+          if (ext === "ts") extension = "ts";
+          else if (ext === "mjs") extension = "mjs";
+          else if (ext === "cjs") extension = "cjs";
+          else extension = "js";
 
           codeFiles.push({
             path: filePath,
             content,
-            extension
+            extension,
           });
         } catch (error) {
           // Skip files that can't be read
@@ -219,9 +224,9 @@ export async function scanAllSkills(directory: string): Promise<ScanResult[]> {
   const results: ScanResult[] = [];
 
   // Find all SKILL.md files
-  const pattern = join(directory, '**/SKILL.md');
+  const pattern = join(directory, "**/SKILL.md");
   const skillFiles = await glob(pattern, {
-    ignore: ['**/node_modules/**']
+    ignore: ["**/node_modules/**"],
   });
 
   for (const skillFile of skillFiles) {
@@ -229,7 +234,10 @@ export async function scanAllSkills(directory: string): Promise<ScanResult[]> {
       const result = await scanSkill(skillFile);
       results.push(result);
     } catch (error) {
-      console.warn(`Warning: Could not scan skill at ${skillFile}:`, (error as Error).message);
+      console.warn(
+        `Warning: Could not scan skill at ${skillFile}:`,
+        (error as Error).message,
+      );
     }
   }
 

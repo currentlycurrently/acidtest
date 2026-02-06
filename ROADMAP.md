@@ -4,7 +4,7 @@ This document outlines the evolution of AcidTest, tracking completed features an
 
 ## Completed
 
-### v0.1.2 (Current)
+### v0.1.3 (Current)
 - **Schema versioning** — JSON output includes `schemaVersion` field for API stability
 - **Test fixtures** — Minimal test suite for CI validation (PASS/WARN/FAIL/DANGER cases)
 - **Documentation** — Cross-referenced docs (README, BUILD-SPEC, ROADMAP, CHANGELOG)

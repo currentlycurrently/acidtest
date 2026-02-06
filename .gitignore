@@ -7,9 +7,6 @@ dist/
 # Test skills (local only)
 test-skills/
 
-# Test fixtures (local only)
-test-fixtures/
-
 # OS junk
 .DS_Store
 Thumbs.db

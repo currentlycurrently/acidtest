@@ -241,7 +241,7 @@ RECOMMENDATION: Do not install. Prompt injection attempt detected.
 {
   "schemaVersion": "1.0.0",
   "tool": "acidtest",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "skill": {
     "name": "skill-name",
     "path": "./path/to/skill"
