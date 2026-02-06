@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-02-06
+
+### Added
+- **Entropy-based Obfuscation Detection**: Shannon entropy analysis for string literals
+  - Automatically calculates entropy for all string literals in code
+  - Flags strings with entropy >4.5 as potential obfuscation (MEDIUM severity)
+  - Smart filtering: skips URLs and short strings (<20 chars) to avoid false positives
+  - Detects base64-encoded payloads, random character sequences, and encoded commands
+  - Example detection: Base64 strings, hex-encoded data, minified obfuscated code
+- Test fixture for entropy detection (`test-fixtures/fixture-entropy/`)
+
+### Technical Details
+- Shannon entropy formula: -Σ(p × log₂(p)) where p is character frequency
+- Threshold: 4.5 (empirically determined to balance detection vs false positives)
+- Minimum string length: 20 characters (shorter strings naturally have lower entropy)
+- Implementation: AST-based analysis using TypeScript Compiler API
+
 ## [0.3.0] - 2026-02-06
 
 ### Added

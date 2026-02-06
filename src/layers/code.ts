@@ -119,6 +119,10 @@ function scanCodeWithAST(codeFile: CodeFile): Finding[] {
     const suspiciousFindings = detectSuspiciousPatterns(sourceFile, relativePath);
     findings.push(...suspiciousFindings);
 
+    // Entropy-based obfuscation detection
+    const entropyFindings = detectHighEntropyStrings(sourceFile, relativePath);
+    findings.push(...entropyFindings);
+
   } catch (error) {
     // If parsing fails, the code might be malformed or obfuscated
     findings.push({
@@ -213,6 +217,91 @@ function detectSuspiciousPatterns(sourceFile: ts.SourceFile, filePath: string): 
       line: evals[0],
       detail: `Found ${evals.length} eval() call(s)`,
       evidence: 'eval() can execute arbitrary code'
+    });
+  }
+
+  return findings;
+}
+
+/**
+ * Calculate Shannon entropy of a string
+ * Returns a value between 0 (no randomness) and ~8 (maximum randomness for byte strings)
+ */
+function calculateEntropy(str: string): number {
+  if (str.length === 0) return 0;
+
+  // Count character frequencies
+  const freq = new Map<string, number>();
+  for (const char of str) {
+    freq.set(char, (freq.get(char) || 0) + 1);
+  }
+
+  // Calculate entropy using Shannon formula: -Σ(p * log2(p))
+  let entropy = 0;
+  const length = str.length;
+
+  for (const count of freq.values()) {
+    const probability = count / length;
+    entropy -= probability * Math.log2(probability);
+  }
+
+  return entropy;
+}
+
+/**
+ * Detect high-entropy strings that may indicate obfuscation
+ */
+function detectHighEntropyStrings(sourceFile: ts.SourceFile, filePath: string): Finding[] {
+  const findings: Finding[] = [];
+  const ENTROPY_THRESHOLD = 4.5; // Strings above this are suspicious
+  const MIN_LENGTH = 20; // Only check strings longer than this
+  const highEntropyStrings: Array<{ text: string; entropy: number; line: number }> = [];
+
+  function visit(node: ts.Node) {
+    // Check string literals and template literals
+    if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
+      const text = node.text;
+
+      // Skip short strings and URLs (already detected elsewhere)
+      if (text.length < MIN_LENGTH) {
+        ts.forEachChild(node, visit);
+        return;
+      }
+
+      // Skip URLs, they naturally have high entropy
+      if (/^https?:\/\//.test(text)) {
+        ts.forEachChild(node, visit);
+        return;
+      }
+
+      const entropy = calculateEntropy(text);
+
+      if (entropy > ENTROPY_THRESHOLD) {
+        const lineNumber = sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1;
+        highEntropyStrings.push({
+          text: text.substring(0, 50) + (text.length > 50 ? '...' : ''),
+          entropy: Math.round(entropy * 100) / 100,
+          line: lineNumber
+        });
+      }
+    }
+
+    ts.forEachChild(node, visit);
+  }
+
+  visit(sourceFile);
+
+  // Only create a finding if we found high-entropy strings
+  if (highEntropyStrings.length > 0) {
+    const first = highEntropyStrings[0];
+    findings.push({
+      severity: 'MEDIUM',
+      category: 'obfuscation',
+      title: 'High-entropy strings detected',
+      file: filePath,
+      line: first.line,
+      detail: `Found ${highEntropyStrings.length} string(s) with high entropy (>${ENTROPY_THRESHOLD})`,
+      evidence: `Entropy: ${first.entropy}, Example: "${first.text}"`
     });
   }
 

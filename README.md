@@ -62,7 +62,7 @@ RECOMMENDATION: Do not install. Prompt injection attempt detected.
 - Credential harvesting
 - Permission mismatches
 - Data exfiltration patterns
-- Obfuscated payloads
+- Obfuscated payloads (regex + entropy analysis)
 
 **For MCP Servers:**
 - Dangerous command execution

@@ -4,7 +4,14 @@ This document outlines the evolution of AcidTest, tracking completed features an
 
 ## Completed
 
-### v0.3.0 (Current)
+### v0.4.0 (Current)
+Focus: Advanced obfuscation detection
+
+- **Entropy-based obfuscation detection** — Shannon entropy analysis automatically detects high-entropy strings (>4.5) that may indicate base64 encoding, hex encoding, or other obfuscation techniques
+- **Smart filtering** — Entropy detection skips URLs and short strings to minimize false positives
+- **Test coverage** — New test fixture for entropy detection validation
+
+### v0.3.0
 Focus: Enhanced detection coverage and community readiness
 
 - **Finding deduplication** — Fixed scoring bug where repeated patterns inflated deductions; now capped at 3 per unique pattern for accurate risk assessment
@@ -36,15 +43,15 @@ Focus: Agent integration and MCP server support
 
 ## Planned
 
-### v0.4.0 (Next Release)
-Focus: Advanced analysis and ecosystem integration
+### v0.5.0 (Next Release)
+Focus: Ecosystem integration and tooling
 
 **Priority: High | Complexity: Low-Medium**
-- **Entropy-based obfuscation detection** — Statistical analysis (Shannon entropy) to identify deliberately obscured code that may evade regex patterns
 - **GitHub Action** — Pre-built action for CI/CD pipelines to automatically scan skills on PR/commit with configurable thresholds
 - **Pre-commit hook template** — Git hook template for local development workflows
+- **VS Code extension** — Real-time scanning as you edit SKILL.md with inline warnings
 
-### v0.5.0
+### v0.6.0
 Focus: Enhanced AST analysis and dataflow tracking
 
 **Priority: Medium | Complexity: High**
@@ -52,7 +59,7 @@ Focus: Enhanced AST analysis and dataflow tracking
 - **Enhanced cross-reference** — Extract actual fetch() URLs from AST and check if environment variables are sent in network requests
 - **AST-based env var extraction** — Replace regex with TypeScript AST traversal to catch dynamic access patterns
 
-### v0.6.0
+### v0.7.0
 Focus: Pattern management and configurability
 
 **Priority: Medium | Complexity: Low**
