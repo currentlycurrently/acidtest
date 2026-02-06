@@ -14,7 +14,7 @@ import { scanCode } from './layers/code.js';
 import { scanCrossReference } from './layers/crossref.js';
 import { calculateScore, determineStatus, generateRecommendation } from './scoring.js';
 
-const VERSION = '0.1.0';
+const VERSION = '0.1.1';
 
 /**
  * Main scan function
