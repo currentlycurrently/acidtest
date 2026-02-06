@@ -108,9 +108,9 @@ export interface ScanResult {
   score: number;
   status: Status;
   permissions: {
-    bins?: string[];
-    env?: string[];
-    tools?: string[];
+    bins: string[];
+    env: string[];
+    tools: string[];
   };
   findings: Finding[];
   recommendation: string;

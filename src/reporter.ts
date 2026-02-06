@@ -29,25 +29,22 @@ export function reportToTerminal(result: ScanResult): void {
   console.log(chalk.dim('━'.repeat(60)));
   console.log();
 
-  // Permissions section
-  const hasBins = result.permissions.bins && (Array.isArray(result.permissions.bins) ? result.permissions.bins.length > 0 : true);
-  const hasEnv = result.permissions.env && (Array.isArray(result.permissions.env) ? result.permissions.env.length > 0 : true);
-  const hasTools = result.permissions.tools && (Array.isArray(result.permissions.tools) ? result.permissions.tools.length > 0 : true);
+  // Permissions section (now always normalized as arrays)
+  const hasBins = result.permissions.bins.length > 0;
+  const hasEnv = result.permissions.env.length > 0;
+  const hasTools = result.permissions.tools.length > 0;
 
   if (hasBins || hasEnv || hasTools) {
     console.log(chalk.bold('PERMISSIONS'));
 
     if (hasBins) {
-      const bins = Array.isArray(result.permissions.bins) ? result.permissions.bins.join(', ') : result.permissions.bins;
-      console.log(`  bins:  ${bins}`);
+      console.log(`  bins:  ${result.permissions.bins.join(', ')}`);
     }
     if (hasEnv) {
-      const env = Array.isArray(result.permissions.env) ? result.permissions.env.join(', ') : result.permissions.env;
-      console.log(`  env:   ${env}`);
+      console.log(`  env:   ${result.permissions.env.join(', ')}`);
     }
     if (hasTools) {
-      const tools = Array.isArray(result.permissions.tools) ? result.permissions.tools.join(', ') : result.permissions.tools;
-      console.log(`  tools: ${tools}`);
+      console.log(`  tools: ${result.permissions.tools.join(', ')}`);
     }
 
     console.log();

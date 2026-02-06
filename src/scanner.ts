@@ -51,7 +51,7 @@ export async function scanSkill(skillPath: string): Promise<ScanResult> {
   const status = determineStatus(score);
   const recommendation = generateRecommendation(status, allFindings);
 
-  // Build result
+  // Build result with normalized permissions
   const result: ScanResult = {
     tool: 'acidtest',
     version: VERSION,
@@ -61,11 +61,7 @@ export async function scanSkill(skillPath: string): Promise<ScanResult> {
     },
     score,
     status,
-    permissions: {
-      bins: skill.metadata.bins,
-      env: skill.metadata.env,
-      tools: skill.metadata['allowed-tools']
-    },
+    permissions: normalizePermissions(skill.metadata),
     findings: allFindings,
     recommendation
   };
@@ -123,6 +119,33 @@ async function loadSkill(skillPath: string): Promise<Skill> {
 }
 
 /**
+ * Normalize permissions to always have consistent structure
+ */
+function normalizePermissions(metadata: any): { bins: string[]; env: string[]; tools: string[] } {
+  // Handle bins
+  let bins: string[] = [];
+  if (metadata.bins) {
+    bins = Array.isArray(metadata.bins) ? metadata.bins : [metadata.bins];
+  }
+
+  // Handle env
+  let env: string[] = [];
+  if (metadata.env) {
+    env = Array.isArray(metadata.env) ? metadata.env : [metadata.env];
+  }
+
+  // Handle allowed-tools
+  let tools: string[] = [];
+  if (metadata['allowed-tools']) {
+    tools = Array.isArray(metadata['allowed-tools'])
+      ? metadata['allowed-tools']
+      : [metadata['allowed-tools']];
+  }
+
+  return { bins, env, tools };
+}
+
+/**
  * Find all code files in skill directory
  */
 async function findCodeFiles(skillDir: string): Promise<CodeFile[]> {
@@ -139,7 +162,23 @@ async function findCodeFiles(skillDir: string): Promise<CodeFile[]> {
   for (const pattern of patterns) {
     try {
       const files = await glob(pattern, {
-        ignore: ['**/node_modules/**', '**/dist/**', '**/build/**']
+        ignore: [
+          '**/node_modules/**',
+          '**/dist/**',
+          '**/build/**',
+          '**/__tests__/**',
+          '**/tests/**',
+          '**/test/**',
+          '**/*.test.{js,ts,mjs,cjs}',
+          '**/*.spec.{js,ts,mjs,cjs}',
+          '**/fixtures/**',
+          '**/examples/**',
+          '**/.git/**',
+          '**/.cache/**',
+          '**/.next/**',
+          '**/.nuxt/**',
+          '**/.vite*/**'
+        ]
       });
 
       for (const filePath of files) {

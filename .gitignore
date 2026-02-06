@@ -1,6 +1,3 @@
-test-skills/
-
-
 # Dependencies
 node_modules/
 
@@ -24,4 +21,8 @@ npm-debug.log*
 
 # Environment (shouldn't exist but just in case)
 .env
-.env.local.DS_Store
+.env.local
+
+# Internal docs
+feedback*.md
+FEEDBACK*.md

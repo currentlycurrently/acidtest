@@ -281,7 +281,11 @@ RECOMMENDATION: Do not install. Prompt injection attempt detected.
    - `**/*.js`
    - `**/*.mjs`
    - `**/*.cjs`
-   - Excludes: `node_modules`, `dist`, `build`
+   - **Excludes**:
+     - Build artifacts: `node_modules`, `dist`, `build`
+     - Test files: `__tests__`, `tests`, `test`, `*.test.*`, `*.spec.*`
+     - Development: `fixtures`, `examples`
+     - Caches: `.git`, `.cache`, `.next`, `.nuxt`, `.vite*`
 
 ## Type System
 
@@ -316,7 +320,11 @@ interface ScanResult {
   skill: { name: string; path: string };
   score: number;
   status: Status;
-  permissions: {...};
+  permissions: {
+    bins: string[];    // Always array, empty if not declared
+    env: string[];     // Always array, empty if not declared
+    tools: string[];   // Always array, empty if not declared
+  };
   findings: Finding[];
   recommendation: string;
 }
