@@ -4,10 +4,18 @@ This document outlines the evolution of AcidTest, tracking completed features an
 
 ## Completed
 
-### v0.2.1 (Current)
-Patch release: Documentation fix
+### v0.3.0 (Current)
+Focus: Enhanced detection coverage and community readiness
 
-- **Documentation correction** — Updated README example output to show correct v0.2.0 version
+- **Finding deduplication** — Fixed scoring bug where repeated patterns inflated deductions; now capped at 3 per unique pattern for accurate risk assessment
+- **Expanded attack patterns** — 5 new patterns (48 total): npm/yarn/pnpm install, git clone, reverse shells, DNS exfiltration, hex obfuscation
+- **Enhanced file discovery** — Scanner now skips coverage/, *.min.js, and vendor/ directories to avoid false positives
+- **Community documentation** — Added CONTRIBUTING.md and SECURITY.md for pattern contributions and vulnerability reporting
+
+### v0.2.2
+Patch release: Build fix
+
+- **Build correction** — Republished with correct dist/ build (0.2.1 had stale compiled code)
 
 ### v0.2.0
 Focus: Agent integration and MCP server support
@@ -28,12 +36,29 @@ Focus: Agent integration and MCP server support
 
 ## Planned
 
-### v0.3.0 (Next Release)
+### v0.4.0 (Next Release)
+Focus: Advanced analysis and ecosystem integration
+
+**Priority: High | Complexity: Low-Medium**
+- **Entropy-based obfuscation detection** — Statistical analysis (Shannon entropy) to identify deliberately obscured code that may evade regex patterns
+- **GitHub Action** — Pre-built action for CI/CD pipelines to automatically scan skills on PR/commit with configurable thresholds
+- **Pre-commit hook template** — Git hook template for local development workflows
+
+### v0.5.0
+Focus: Enhanced AST analysis and dataflow tracking
+
+**Priority: Medium | Complexity: High**
+- **Basic dataflow analysis** — Track tainted values from sources (user input, env vars, network) to dangerous sinks (exec, eval, fetch)
+- **Enhanced cross-reference** — Extract actual fetch() URLs from AST and check if environment variables are sent in network requests
+- **AST-based env var extraction** — Replace regex with TypeScript AST traversal to catch dynamic access patterns
+
+### v0.6.0
 Focus: Pattern management and configurability
 
-- **Pattern JSON schema validation** — JSON Schema for `src/patterns/*.json` files with automated validation on build, ensuring all detection patterns are well-formed before deployment
-- **Pattern versioning system** — Semantic versioning for pattern files, allowing skills to declare minimum scanner version and enabling graceful degradation when new patterns are added
-- **Optional ignore patterns config** — `.acidtest.json` configuration file for suppressing specific findings (e.g., known false positives in trusted skills), useful for CI/CD workflows
+**Priority: Medium | Complexity: Low**
+- **Pattern JSON schema validation** — JSON Schema for `src/patterns/*.json` files with automated validation on build
+- **Optional ignore patterns config** — `.acidtest.json` configuration file for suppressing specific findings (useful for CI/CD)
+- **Pattern contribution workflow** — Streamlined PR process with automated testing against known-good/malicious skill corpus
 
 ## Future Considerations
 
@@ -64,4 +89,4 @@ See the contribution guidelines in the main README for details on submitting pat
 
 ---
 
-Last updated: 2025-02-06
+Last updated: 2026-02-06

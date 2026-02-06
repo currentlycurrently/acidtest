@@ -19,13 +19,25 @@ const SEVERITY_POINTS: Record<Severity, number> = {
 /**
  * Calculate trust score from findings
  * Score starts at 100 and deductions are made for each finding
+ * Repeated patterns are capped at 3 deductions to prevent score inflation
  */
 export function calculateScore(findings: Finding[]): number {
   let score = 100;
 
+  // Track how many times we've deducted points for each pattern
+  const patternDeductionCount = new Map<string, number>();
+
   for (const finding of findings) {
-    const deduction = SEVERITY_POINTS[finding.severity];
-    score -= deduction;
+    // Use patternId as the key, fallback to title if not available
+    const key = finding.patternId || finding.title;
+    const currentCount = patternDeductionCount.get(key) || 0;
+
+    // Cap deductions at 3 per unique pattern
+    if (currentCount < 3) {
+      const deduction = SEVERITY_POINTS[finding.severity];
+      score -= deduction;
+      patternDeductionCount.set(key, currentCount + 1);
+    }
   }
 
   // Floor at 0

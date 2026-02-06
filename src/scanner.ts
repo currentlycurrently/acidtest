@@ -19,7 +19,7 @@ import {
 } from "./scoring.js";
 import { detectMCPManifest, parseMCPManifest } from "./loaders/mcp-loader.js";
 
-const VERSION = "0.2.2";
+const VERSION = "0.3.0";
 
 /**
  * Main scan function
@@ -235,6 +235,10 @@ async function findCodeFiles(skillDir: string): Promise<CodeFile[]> {
           "**/.next/**",
           "**/.nuxt/**",
           "**/.vite*/**",
+          "**/coverage/**",
+          "**/*.min.js",
+          "**/*.min.mjs",
+          "**/vendor/**",
         ],
       });
 

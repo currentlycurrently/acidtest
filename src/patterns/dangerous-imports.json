@@ -108,6 +108,30 @@
         "flags": "g"
       },
       "layer": "code"
+    },
+    {
+      "id": "di-010",
+      "name": "npm-install-in-code",
+      "description": "Attempts to install packages at runtime",
+      "severity": "HIGH",
+      "match": {
+        "type": "regex",
+        "value": "(npm|yarn|pnpm)\\s+(install|add|i)\\b",
+        "flags": "g"
+      },
+      "layer": "code"
+    },
+    {
+      "id": "di-011",
+      "name": "git-clone",
+      "description": "Attempts to clone or pull git repositories",
+      "severity": "HIGH",
+      "match": {
+        "type": "regex",
+        "value": "git\\s+(clone|pull|fetch)\\b",
+        "flags": "g"
+      },
+      "layer": "code"
     }
   ]
 }

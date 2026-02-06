@@ -72,6 +72,30 @@
         "flags": "g"
       },
       "layer": "code"
+    },
+    {
+      "id": "ex-007",
+      "name": "reverse-shell",
+      "description": "Contains reverse shell patterns",
+      "severity": "CRITICAL",
+      "match": {
+        "type": "regex",
+        "value": "(nc\\s+-e|/dev/tcp/|bash\\s+-i|sh\\s+-i)|(netcat.*-e)|(socat.*exec)",
+        "flags": "g"
+      },
+      "layer": "code"
+    },
+    {
+      "id": "ex-008",
+      "name": "dns-lookup",
+      "description": "Uses DNS lookup functions for potential exfiltration",
+      "severity": "MEDIUM",
+      "match": {
+        "type": "regex",
+        "value": "(dns\\.(lookup|resolve)|lookupService|resolveTxt)",
+        "flags": "g"
+      },
+      "layer": "code"
     }
   ]
 }

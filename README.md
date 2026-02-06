@@ -26,7 +26,7 @@ No API keys. No configuration. No Python.
 
 ## Example Output
 ```
-AcidTest v0.2.0
+AcidTest v0.3.0
 
 Scanning: proactive-agent
 Source:   test-skills/proactive-agent-1-2-4-1

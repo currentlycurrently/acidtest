@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-02-06
+
+### Added
+- **New Attack Patterns**: 5 new detection patterns for broader threat coverage
+  - `di-010`: npm/yarn/pnpm install in code (HIGH) - detects runtime package installation
+  - `di-011`: git clone/pull/fetch operations (HIGH) - detects repository cloning attempts
+  - `ex-007`: Reverse shell patterns (CRITICAL) - detects reverse shell commands (nc -e, /dev/tcp/, bash -i, socat)
+  - `ex-008`: DNS lookup functions (MEDIUM) - detects potential DNS exfiltration
+  - `ob-006`: Hex decoding (MEDIUM) - detects hex-based obfuscation techniques
+- **Enhanced File Discovery**: Expanded ignore patterns to skip irrelevant files
+  - Added `coverage/` - test coverage output directories
+  - Added `*.min.js` and `*.min.mjs` - minified files (likely third-party)
+  - Added `vendor/` - third-party vendor code
+- **Documentation**: Added CONTRIBUTING.md and SECURITY.md
+  - CONTRIBUTING.md provides clear guidelines for adding detection patterns
+  - SECURITY.md establishes vulnerability reporting process and scope
+  - Both files improve project professionalism and community engagement
+
+### Fixed
+- **Finding Deduplication**: Capped repeated pattern matches at 3 deductions per unique pattern
+  - Prevents unfair score inflation when the same pattern triggers many times
+  - Example: 50 fetch() calls now deduct 24 points (3 × 8) instead of 400 points (50 × 8)
+  - More accurate risk assessment for skills with repetitive patterns
+
+### Changed
+- Pattern count: 43 → 48 detection patterns
+- File scanning now excludes coverage reports, minified files, and vendor directories
+
 ## [0.2.2] - 2025-02-06
 
 ### Fixed

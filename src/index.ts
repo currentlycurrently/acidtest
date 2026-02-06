@@ -11,7 +11,7 @@ import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { spawn } from "child_process";
 
-const VERSION = "0.2.2";
+const VERSION = "0.3.0";
 
 /**
  * Main CLI function

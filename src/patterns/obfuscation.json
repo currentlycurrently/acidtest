@@ -60,6 +60,18 @@
         "flags": "gm"
       },
       "layer": "code"
+    },
+    {
+      "id": "ob-006",
+      "name": "hex-decode",
+      "description": "Uses hex decoding for potential obfuscation",
+      "severity": "MEDIUM",
+      "match": {
+        "type": "regex",
+        "value": "Buffer\\.from\\([^)]+,\\s*['\"]hex['\"]\\)",
+        "flags": "g"
+      },
+      "layer": "code"
     }
   ]
 }
