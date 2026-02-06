@@ -59,8 +59,6 @@ RECOMMENDATION: Do not install. Prompt injection attempt detected.
 
 AcidTest runs four analysis layers: permission audit, prompt injection scan, code analysis (via TypeScript AST), and cross-reference checks that catch when code behavior doesn't match declared permissions.
 
-For technical details, see [BUILD-SPEC.md](./BUILD-SPEC.md).
-
 ## Install
 ```bash
 npm install -g acidtest
