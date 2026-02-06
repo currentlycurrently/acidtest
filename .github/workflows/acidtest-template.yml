@@ -18,33 +18,37 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        if: hashFiles('src/scanner.ts') != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
       - name: Run AcidTest
         run: |
           # Detect if we're scanning the acidtest repo itself
           if [ -d "test-fixtures" ] && [ -f "src/scanner.ts" ]; then
-            echo "📦 Detected acidtest repository - scanning test fixtures"
-            npx acidtest@latest scan-all test-fixtures --json > results.json
+            echo "📦 Detected acidtest repository - testing with fixtures"
+            npm install
+            npm run build
 
-            # For scan-all, check if array is empty or has errors
-            if [ "$(jq '. | length' results.json)" -eq 0 ]; then
-              echo "❌ No fixtures found to scan"
+            # Only scan PASS fixtures for CI (don't fail on test cases designed to fail)
+            echo "🛡️ Running CI tests on PASS fixtures..."
+            node dist/index.js scan test-fixtures/fixture-pass --json > result-pass.json
+            node dist/index.js scan test-fixtures/fixture-mcp-pass --json > result-mcp.json
+
+            PASS_STATUS=$(jq -r '.status' result-pass.json)
+            MCP_STATUS=$(jq -r '.status' result-mcp.json)
+
+            echo "  fixture-pass: $PASS_STATUS"
+            echo "  fixture-mcp-pass: $MCP_STATUS"
+
+            if [ "$PASS_STATUS" != "PASS" ] || [ "$MCP_STATUS" != "PASS" ]; then
+              echo "❌ Expected PASS fixtures to pass"
               exit 1
             fi
 
-            # Check for any failures in the array
-            FAILURES=$(jq '[.[] | select(.status == "FAIL" or .status == "DANGER")] | length' results.json)
-
-            echo "🛡️ AcidTest Results (Test Fixtures)"
-            jq -r '.[] | "  \(.skill.name): \(.status) (\(.score)/100)"' results.json
-
-            if [ "$FAILURES" -gt 0 ]; then
-              echo ""
-              echo "❌ $FAILURES fixture(s) failed"
-              exit 1
-            fi
-
-            echo ""
-            echo "✅ All fixtures passed"
+            echo "✅ CI tests passed"
           else
             # Standard scan for skill/MCP repositories
             npx acidtest@latest scan . --json > results.json

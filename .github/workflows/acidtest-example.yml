@@ -23,11 +23,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        if: hashFiles('src/scanner.ts') != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
       - name: Run AcidTest
         run: |
           # Detect if we're in acidtest repo, scan fixtures instead
           if [ -d "test-fixtures" ] && [ -f "src/scanner.ts" ]; then
-            npx acidtest@latest scan test-fixtures/fixture-pass
+            npm install
+            npm run build
+            node dist/index.js scan test-fixtures/fixture-pass
           else
             npx acidtest@latest scan .
           fi
@@ -39,12 +47,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        if: hashFiles('src/scanner.ts') != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
       - name: Run AcidTest
         id: acidtest
         run: |
           # Detect if we're in acidtest repo, scan fixtures instead
           if [ -d "test-fixtures" ] && [ -f "src/scanner.ts" ]; then
-            npx acidtest@latest scan test-fixtures/fixture-pass --json > scan-results.json
+            npm install
+            npm run build
+            node dist/index.js scan test-fixtures/fixture-pass --json > scan-results.json
           else
             npx acidtest@latest scan . --json > scan-results.json
           fi
@@ -92,11 +108,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        if: hashFiles('src/scanner.ts') != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
       - name: Run AcidTest on all skills
         run: |
-          # Detect if we're in acidtest repo, scan fixtures instead
+          # Detect if we're in acidtest repo, only scan PASS fixtures
           if [ -d "test-fixtures" ] && [ -f "src/scanner.ts" ]; then
-            npx acidtest@latest scan-all test-fixtures --json > results.json
+            npm install
+            npm run build
+            # Scan only PASS fixtures (fixture-fail/danger are test cases, not CI targets)
+            node dist/index.js scan test-fixtures/fixture-pass --json > result1.json
+            node dist/index.js scan test-fixtures/fixture-mcp-pass --json > result2.json
+            # Combine into array for testing
+            jq -s '.' result1.json result2.json > results.json
+            rm result1.json result2.json
           else
             npx acidtest@latest scan-all ./skills --json > results.json
           fi
@@ -130,12 +159,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        if: hashFiles('src/scanner.ts') != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
       - name: Run AcidTest
         id: scan
         run: |
           # Detect if we're in acidtest repo, scan fixtures instead
           if [ -d "test-fixtures" ] && [ -f "src/scanner.ts" ]; then
-            npx acidtest@latest scan test-fixtures/fixture-pass --json > scan-results.json
+            npm install
+            npm run build
+            node dist/index.js scan test-fixtures/fixture-pass --json > scan-results.json
           else
             npx acidtest@latest scan . --json > scan-results.json
           fi

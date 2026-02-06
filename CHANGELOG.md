@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.2] - 2026-02-06
+
+### Fixed
+- **GitHub Actions Workflows**: Fixed CI failures on acidtest repository
+  - Workflows now use local build (`npm install && npm run build`) when running on acidtest repo
+  - Only scans PASS fixtures (`fixture-pass`, `fixture-mcp-pass`) in CI
+  - Test fixtures designed to fail (fixture-fail, fixture-danger) no longer cause CI failures
+  - Workflows still function correctly as templates for user repositories (use `npx acidtest@latest`)
+
+### Changed
+- Workflows build from source when detecting acidtest repository
+- CI tests validate scanner works correctly without falsely failing on test cases
+
 ## [0.5.1] - 2026-02-06
 
 ### Fixed
