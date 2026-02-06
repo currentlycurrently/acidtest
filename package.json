@@ -7,7 +7,8 @@
     "acidtest": "./dist/index.js"
   },
   "scripts": {
-    "build": "tsc && mkdir -p dist/patterns && cp src/patterns/*.json dist/patterns/",
+    "validate": "node scripts/validate-patterns.js",
+    "build": "node scripts/validate-patterns.js && tsc && mkdir -p dist/patterns && cp src/patterns/*.json dist/patterns/",
     "dev": "npm run build && node dist/index.js",
     "watch": "tsc --watch"
   },
