@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2025-02-06
+
+### Added
+- **MCP Server Wrapper**: AcidTest can now run as an MCP (Model Context Protocol) server, allowing AI agents like Claude to scan skills and tools before installation
+  - New `acidtest serve` command starts AcidTest in MCP server mode
+  - Exposes two tools: `scan_skill` and `scan_all` for agent integration
+  - Uses stdio transport for seamless integration with Claude Desktop and other MCP clients
+- **MCP Manifest Scanning**: Extended scanning support to MCP server configurations
+  - Automatically detects and parses `mcp.json`, `server.json`, `package.json` with MCP config, and `claude_desktop_config.json`
+  - Maps MCP concepts (tools, transport, command, env) to existing permission model
+  - Applies all four security layers to MCP servers
+  - SSE transport automatically flagged as network access
+- **Demo Command**: New `acidtest demo` command runs built-in test fixtures
+  - Shows full output spectrum (PASS, WARN, FAIL, DANGER) in seconds
+  - Perfect for evaluating AcidTest before use
+  - Test fixtures now bundled in npm package
+
+### Changed
+- CLI help text updated to reflect MCP server and demo capabilities
+- `scan` command now accepts MCP manifest files in addition to SKILL.md
+- `scan-all` command now discovers both AgentSkills and MCP servers
+- Package description updated to reflect broader scope
+
+### Dependencies
+- Added `@modelcontextprotocol/sdk` (^1.26.0) for MCP server functionality
+
+### Documentation
+- Updated README with MCP server usage and configuration examples
+- Added MCP architecture section to BUILD-SPEC.md
+- Updated ROADMAP with completed features
+
 ## [0.1.2] - 2025-02-06
 
 ### Added

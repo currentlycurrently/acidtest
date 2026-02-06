@@ -7,8 +7,11 @@
 
 import { scanSkill, scanAllSkills } from "./scanner.js";
 import { reportToTerminal, reportAsJSON } from "./reporter.js";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
+import { spawn } from "child_process";
 
-const VERSION = "0.1.3";
+const VERSION = "0.2.0";
 
 /**
  * Main CLI function
@@ -35,6 +38,10 @@ async function main() {
     await handleScan(args.slice(1));
   } else if (command === "scan-all") {
     await handleScanAll(args.slice(1));
+  } else if (command === "demo") {
+    await handleDemo(args.slice(1));
+  } else if (command === "serve") {
+    await handleServe(args.slice(1));
   } else {
     console.error(`Unknown command: ${command}`);
     console.error('Run "acidtest --help" for usage information.');
@@ -147,22 +154,141 @@ async function handleScanAll(args: string[]) {
 }
 
 /**
+ * Handle 'demo' command
+ * Runs built-in test fixtures to show the full output spectrum
+ */
+async function handleDemo(args: string[]) {
+  console.log("AcidTest Demo - Running built-in test fixtures...\n");
+
+  // Find fixtures directory relative to this file
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = dirname(__filename);
+  const fixturesDir = join(__dirname, "..", "test-fixtures");
+
+  const fixtures = [
+    { name: "PASS", path: join(fixturesDir, "fixture-pass") },
+    { name: "WARN", path: join(fixturesDir, "fixture-warn") },
+    { name: "FAIL", path: join(fixturesDir, "fixture-fail") },
+    { name: "DANGER", path: join(fixturesDir, "fixture-danger") },
+  ];
+
+  const results = [];
+
+  for (let i = 0; i < fixtures.length; i++) {
+    const fixture = fixtures[i];
+
+    try {
+      const result = await scanSkill(fixture.path);
+      results.push({ fixture: fixture.name, result });
+
+      console.log(`[${ fixture.name } Example]`);
+      reportToTerminal(result);
+
+      if (i < fixtures.length - 1) {
+        console.log("\n" + "─".repeat(60) + "\n");
+      }
+    } catch (error) {
+      console.warn(
+        `Warning: Could not scan ${fixture.name} fixture:`,
+        (error as Error).message,
+      );
+    }
+  }
+
+  // Print summary
+  console.log("\n" + "=".repeat(60));
+  console.log("\nDemo Summary:");
+  console.log(
+    "AcidTest provides four security levels based on trust score (0-100):\n",
+  );
+
+  for (const { fixture, result } of results) {
+    const statusColor =
+      result.status === "PASS"
+        ? "green"
+        : result.status === "WARN"
+          ? "yellow"
+          : result.status === "FAIL"
+            ? "red"
+            : "red";
+
+    console.log(
+      `  ${result.status.padEnd(6)} (${result.score}/100) - ${getStatusDescription(result.status)}`,
+    );
+  }
+
+  console.log(
+    "\nRun 'acidtest scan <path>' to scan your own skills and tools.",
+  );
+  console.log("For more information, visit: https://acidtest.dev\n");
+}
+
+/**
+ * Get status description for demo summary
+ */
+function getStatusDescription(status: string): string {
+  switch (status) {
+    case "PASS":
+      return "Safe to use, no significant security concerns";
+    case "WARN":
+      return "Review findings before use, minor concerns";
+    case "FAIL":
+      return "Not recommended, significant security issues";
+    case "DANGER":
+      return "Do not use, critical security vulnerabilities";
+    default:
+      return "Unknown status";
+  }
+}
+
+/**
+ * Handle 'serve' command
+ * Starts AcidTest as an MCP server
+ */
+async function handleServe(args: string[]) {
+  // Find the mcp-server.js file relative to this file
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = dirname(__filename);
+  const mcpServerPath = join(__dirname, "mcp-server.js");
+
+  // Start the MCP server as a child process
+  const mcpServer = spawn("node", [mcpServerPath], {
+    stdio: "inherit", // Inherit stdin/stdout/stderr for MCP protocol
+  });
+
+  // Handle process termination
+  mcpServer.on("exit", (code) => {
+    process.exit(code || 0);
+  });
+
+  // Handle errors
+  mcpServer.on("error", (error) => {
+    console.error("Failed to start MCP server:", error.message);
+    process.exit(1);
+  });
+}
+
+/**
  * Print help text
  */
 function printHelp() {
   console.log(`
 AcidTest v${VERSION}
-Security scanner for AI agent skills
+Security scanner for AI agent skills and MCP servers
 
 USAGE:
-  acidtest scan <path-to-skill> [--json]
+  acidtest scan <path> [--json]
   acidtest scan-all <directory> [--json]
+  acidtest demo
+  acidtest serve
   acidtest --version
   acidtest --help
 
 COMMANDS:
-  scan          Scan a single skill directory or SKILL.md file
-  scan-all      Recursively scan all skills in a directory
+  scan          Scan a single skill/MCP server (SKILL.md, mcp.json, etc.)
+  scan-all      Recursively scan all skills/servers in a directory
+  demo          Run demo with built-in test fixtures
+  serve         Start AcidTest as an MCP server for AI agents
 
 OPTIONS:
   --json        Output results as JSON
@@ -170,14 +296,23 @@ OPTIONS:
   --help        Show this help message
 
 EXAMPLES:
-  # Scan a single skill
+  # See AcidTest in action with demo fixtures
+  acidtest demo
+
+  # Scan an AgentSkills skill
   acidtest scan ./my-skill
+
+  # Scan an MCP server
+  acidtest scan ./my-mcp-server
 
   # Scan with JSON output
   acidtest scan ./my-skill --json
 
-  # Scan all skills in a directory
-  acidtest scan-all ./skills-directory
+  # Scan all skills/servers in a directory
+  acidtest scan-all ./directory
+
+  # Start as MCP server (for use with Claude Desktop, etc.)
+  acidtest serve
 
 For more information, visit: https://acidtest.dev
 `);

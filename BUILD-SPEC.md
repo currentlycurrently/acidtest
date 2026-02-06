@@ -2,13 +2,14 @@
 
 ## Overview
 
-AcidTest is an open-source CLI tool that scans AI agent skills (AgentSkills/SKILL.md format) for security vulnerabilities. It provides fast, local security analysis with zero configuration and no external dependencies.
+AcidTest is an open-source security scanner for AI agent skills (AgentSkills/SKILL.md format) and MCP servers. It provides fast, local security analysis with zero configuration. As of v0.2.0, AcidTest can also run as an MCP (Model Context Protocol) server, allowing AI agents to scan skills and tools before installation.
 
 **Key principles:**
 - Zero network calls (runs entirely locally)
 - Zero API keys (no external services)
 - Zero configuration (works out of the box)
-- Fast execution (< 2 seconds per skill)
+- Fast execution (< 2 seconds per skill/server)
+- Agent-usable via MCP protocol
 
 ## Architecture
 
@@ -22,17 +23,21 @@ AcidTest is an open-source CLI tool that scans AI agent skills (AgentSkills/SKIL
   - `typescript` — AST parsing via Compiler API
   - `chalk` — terminal colors
   - `glob` — file discovery
+  - `@modelcontextprotocol/sdk` — MCP server implementation
 
 ### Project Structure
 
 ```
 src/
 ├── index.ts              # CLI entry point and argument parsing
+├── mcp-server.ts         # MCP server wrapper (stdio transport)
 ├── scanner.ts            # Main orchestrator, coordinates all layers
 ├── pattern-loader.ts     # Loads patterns from JSON files
 ├── scoring.ts            # Trust score calculation
 ├── reporter.ts           # Terminal and JSON output formatting
 ├── types.ts              # TypeScript interfaces
+├── loaders/
+│   └── mcp-loader.ts     # MCP manifest detection and parsing
 ├── layers/
 │   ├── permissions.ts    # Layer 1: YAML frontmatter audit
 │   ├── injection.ts      # Layer 2: Markdown prompt injection scan
@@ -119,6 +124,133 @@ Compares findings across layers to detect permission mismatches and deception:
 - Minified code (avg line length > 200 chars) → MEDIUM
 - Large code size for simple functionality → MEDIUM
 
+## MCP Architecture (v0.2.0+)
+
+### MCP Server Mode
+
+**Location**: `src/mcp-server.ts`
+
+AcidTest can run as an MCP server, exposing scanning functionality as tools that AI agents can invoke.
+
+**Transport**: stdio (standard input/output)
+
+**Server capabilities**:
+```json
+{
+  "name": "acidtest",
+  "version": "0.2.0",
+  "capabilities": {
+    "tools": {}
+  }
+}
+```
+
+### Available MCP Tools
+
+#### scan_skill
+Scans a single skill or MCP server for vulnerabilities.
+
+**Input schema**:
+```json
+{
+  "type": "object",
+  "properties": {
+    "path": {
+      "type": "string",
+      "description": "Path to skill directory, SKILL.md, or MCP manifest"
+    }
+  },
+  "required": ["path"]
+}
+```
+
+**Output**: JSON-formatted `ScanResult` object
+
+#### scan_all
+Recursively scans all skills/servers in a directory.
+
+**Input schema**:
+```json
+{
+  "type": "object",
+  "properties": {
+    "directory": {
+      "type": "string",
+      "description": "Path to directory containing skills/servers"
+    }
+  },
+  "required": ["directory"]
+}
+```
+
+**Output**: JSON array of `ScanResult` objects
+
+### MCP Manifest Scanning
+
+**Location**: `src/loaders/mcp-loader.ts`
+
+AcidTest auto-detects and parses MCP server manifests:
+
+**Supported formats**:
+- `mcp.json` — Direct MCP server manifest
+- `server.json` — Alternative manifest name
+- `package.json` — With `mcp` or `mcpServers` config
+- `claude_desktop_config.json` — Claude Desktop configuration
+
+**Manifest parsing**:
+1. Detects manifest file in directory
+2. Extracts MCP-specific fields (tools, transport, command, env)
+3. Maps to AcidTest permission model:
+   - `tools` → `allowed-tools` array
+   - `command` → `bins` array
+   - `env` object → `env` array (keys only)
+   - `transport: "sse"` → adds "network" to allowed-tools
+4. JSON content used as "markdown" for Layer 2 scanning
+5. All four layers applied to MCP servers
+
+**Permission mapping example**:
+```json
+// mcp.json
+{
+  "name": "my-server",
+  "command": "node",
+  "args": ["server.js"],
+  "env": { "API_KEY": "" },
+  "transport": "stdio",
+  "tools": [
+    { "name": "get_data" }
+  ]
+}
+
+// Maps to
+{
+  "bins": ["node", "server.js"],
+  "env": ["API_KEY"],
+  "tools": ["get_data"]
+}
+```
+
+### Integration with Agents
+
+**Claude Desktop** (via `claude_desktop_config.json`):
+```json
+{
+  "mcpServers": {
+    "acidtest": {
+      "command": "npx",
+      "args": ["-y", "acidtest", "serve"]
+    }
+  }
+}
+```
+
+Agents can then invoke:
+```
+scan_skill({ path: "/path/to/untrusted-skill" })
+```
+
+And receive structured security analysis before installation.
+
 ## Pattern System
 
 ### Pattern Schema
@@ -180,8 +312,10 @@ score = max(0, score)
 ### Commands
 
 ```bash
-acidtest scan <path>              # Scan single skill
-acidtest scan-all <directory>     # Scan all skills recursively
+acidtest scan <path>              # Scan single skill/MCP server
+acidtest scan-all <directory>     # Scan all skills/servers recursively
+acidtest demo                     # Run demo with built-in fixtures
+acidtest serve                    # Start as MCP server (stdio)
 acidtest --version                # Show version
 acidtest --help                   # Show help
 ```
@@ -269,24 +403,33 @@ RECOMMENDATION: Do not install. Prompt injection attempt detected.
 }
 ```
 
-## Skill Discovery
+## Skill/Server Discovery
 
 **Implementation**: `scanner.ts`
 
-1. Accepts path to skill directory or SKILL.md file
-2. Locates SKILL.md (required)
-3. Parses frontmatter with `gray-matter`
-4. Extracts markdown content
+### Single Scan (`acidtest scan`)
+
+1. Accepts path to directory or manifest file
+2. **AgentSkills path**: Locates `SKILL.md`, parses with `gray-matter`
+3. **MCP server path**: Auto-detects `mcp.json`, `server.json`, or `package.json` with MCP config
+4. Extracts metadata (permissions for AgentSkills, manifest fields for MCP)
 5. Discovers code files via `glob`:
-   - `**/*.ts`
-   - `**/*.js`
-   - `**/*.mjs`
-   - `**/*.cjs`
+   - `**/*.ts`, `**/*.js`, `**/*.mjs`, `**/*.cjs`
    - **Excludes**:
      - Build artifacts: `node_modules`, `dist`, `build`
      - Test files: `__tests__`, `tests`, `test`, `*.test.*`, `*.spec.*`
      - Development: `fixtures`, `examples`
      - Caches: `.git`, `.cache`, `.next`, `.nuxt`, `.vite*`
+
+### Batch Scan (`acidtest scan-all`)
+
+1. Recursively searches directory for:
+   - `**/SKILL.md` (AgentSkills)
+   - `**/mcp.json` (MCP servers)
+   - `**/server.json` (MCP servers)
+2. Deduplicates by directory (avoids scanning same server twice)
+3. Scans each discovered skill/server
+4. Returns array of results
 
 ## Type System
 

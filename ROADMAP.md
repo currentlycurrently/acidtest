@@ -4,7 +4,15 @@ This document outlines the evolution of AcidTest, tracking completed features an
 
 ## Completed
 
-### v0.1.3 (Current)
+### v0.2.0 (Current)
+Focus: Agent integration and MCP server support
+
+- **MCP Server Wrapper** — AcidTest can now run as an MCP (Model Context Protocol) server, exposing security scanning as tools that AI agents like Claude can invoke before installing skills
+- **MCP Manifest Scanning** — Extended scanning support to MCP server configurations (mcp.json, server.json, package.json with MCP config)
+- **Demo Command** — New `acidtest demo` command runs built-in test fixtures to showcase the full security spectrum (PASS/WARN/FAIL/DANGER)
+- **Broader Tool Coverage** — AcidTest now scans both AgentSkills (SKILL.md) and MCP servers with unified four-layer analysis
+
+### v0.1.3
 - **Schema versioning** — JSON output includes `schemaVersion` field for API stability
 - **Test fixtures** — Minimal test suite for CI validation (PASS/WARN/FAIL/DANGER cases)
 - **Documentation** — Cross-referenced docs (README, BUILD-SPEC, ROADMAP, CHANGELOG)
@@ -15,7 +23,7 @@ This document outlines the evolution of AcidTest, tracking completed features an
 
 ## Planned
 
-### v0.2.0 (Next Release)
+### v0.3.0 (Next Release)
 Focus: Pattern management and configurability
 
 - **Pattern JSON schema validation** — JSON Schema for `src/patterns/*.json` files with automated validation on build, ensuring all detection patterns are well-formed before deployment

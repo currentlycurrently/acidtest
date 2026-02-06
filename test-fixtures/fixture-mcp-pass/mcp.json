@@ -1,0 +1,31 @@
+{
+  "name": "time-formatter",
+  "version": "1.0.0",
+  "description": "A simple MCP server that formats time and date",
+  "transport": "stdio",
+  "command": "node",
+  "args": ["index.js"],
+  "tools": [
+    {
+      "name": "format_time",
+      "description": "Format the current time in various formats",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "format": {
+            "type": "string",
+            "description": "Time format (12h, 24h, iso)"
+          }
+        }
+      }
+    },
+    {
+      "name": "get_date",
+      "description": "Get the current date",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    }
+  ]
+}

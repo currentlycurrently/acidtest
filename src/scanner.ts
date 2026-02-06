@@ -4,7 +4,7 @@
  */
 
 import { readFileSync, existsSync, statSync } from "fs";
-import { join, basename, extname } from "path";
+import { join, basename, extname, dirname } from "path";
 import { glob } from "glob";
 import matter from "gray-matter";
 import type { Skill, CodeFile, ScanResult, Finding } from "./types.js";
@@ -17,8 +17,9 @@ import {
   determineStatus,
   generateRecommendation,
 } from "./scoring.js";
+import { detectMCPManifest, parseMCPManifest } from "./loaders/mcp-loader.js";
 
-const VERSION = "0.1.3";
+const VERSION = "0.2.0";
 
 /**
  * Main scan function
@@ -76,27 +77,49 @@ export async function scanSkill(skillPath: string): Promise<ScanResult> {
 
 /**
  * Load a skill from a directory or SKILL.md file
+ * Also supports MCP server manifests (mcp.json, server.json, package.json)
  */
 async function loadSkill(skillPath: string): Promise<Skill> {
-  let skillMdPath: string;
   let skillDir: string;
 
   // Determine if path is a directory or file
   if (existsSync(skillPath) && statSync(skillPath).isDirectory()) {
     skillDir = skillPath;
-    skillMdPath = join(skillPath, "SKILL.md");
-  } else if (basename(skillPath) === "SKILL.md") {
-    skillMdPath = skillPath;
-    skillDir = join(skillPath, "..");
+  } else if (
+    basename(skillPath) === "SKILL.md" ||
+    basename(skillPath).endsWith(".json")
+  ) {
+    skillDir = dirname(skillPath);
   } else {
-    throw new Error("Path must be a skill directory or SKILL.md file");
+    throw new Error(
+      "Path must be a skill/MCP directory or SKILL.md/manifest file",
+    );
   }
 
-  // Check if SKILL.md exists
-  if (!existsSync(skillMdPath)) {
-    throw new Error(`SKILL.md not found at: ${skillMdPath}`);
+  // Try to load as SKILL.md first (AgentSkills format)
+  const skillMdPath = join(skillDir, "SKILL.md");
+  if (existsSync(skillMdPath)) {
+    return await loadAgentSkill(skillDir, skillMdPath);
   }
 
+  // Try to detect MCP manifest
+  const mcpManifestPath = detectMCPManifest(skillDir);
+  if (mcpManifestPath) {
+    return await loadMCPServer(skillDir, mcpManifestPath);
+  }
+
+  throw new Error(
+    `No SKILL.md or MCP manifest found in directory: ${skillDir}`,
+  );
+}
+
+/**
+ * Load an AgentSkills format skill (SKILL.md)
+ */
+async function loadAgentSkill(
+  skillDir: string,
+  skillMdPath: string,
+): Promise<Skill> {
   // Read and parse SKILL.md
   const skillContent = readFileSync(skillMdPath, "utf-8");
   const parsed = matter(skillContent);
@@ -113,8 +136,36 @@ async function loadSkill(skillPath: string): Promise<Skill> {
 
   return {
     name: skillName,
-    path: skillPath,
+    path: skillDir,
     metadata,
+    markdownContent,
+    codeFiles,
+  };
+}
+
+/**
+ * Load an MCP server manifest
+ */
+async function loadMCPServer(
+  skillDir: string,
+  manifestPath: string,
+): Promise<Skill> {
+  const manifest = parseMCPManifest(manifestPath);
+
+  // Use the manifest content as markdown for scanning
+  const markdownContent = JSON.stringify(manifest.rawConfig, null, 2);
+
+  // Determine server name
+  const serverName =
+    manifest.metadata.name || basename(skillDir) || "unknown-mcp-server";
+
+  // Find all code files
+  const codeFiles = await findCodeFiles(skillDir);
+
+  return {
+    name: serverName,
+    path: skillDir,
+    metadata: manifest.metadata,
     markdownContent,
     codeFiles,
   };
@@ -218,18 +269,23 @@ async function findCodeFiles(skillDir: string): Promise<CodeFile[]> {
 }
 
 /**
- * Scan multiple skills in a directory
+ * Scan multiple skills/MCP servers in a directory
  */
 export async function scanAllSkills(directory: string): Promise<ScanResult[]> {
   const results: ScanResult[] = [];
+  const scanned = new Set<string>(); // Track scanned directories to avoid duplicates
 
   // Find all SKILL.md files
-  const pattern = join(directory, "**/SKILL.md");
-  const skillFiles = await glob(pattern, {
+  const skillPattern = join(directory, "**/SKILL.md");
+  const skillFiles = await glob(skillPattern, {
     ignore: ["**/node_modules/**"],
   });
 
   for (const skillFile of skillFiles) {
+    const skillDir = dirname(skillFile);
+    if (scanned.has(skillDir)) continue;
+    scanned.add(skillDir);
+
     try {
       const result = await scanSkill(skillFile);
       results.push(result);
@@ -238,6 +294,34 @@ export async function scanAllSkills(directory: string): Promise<ScanResult[]> {
         `Warning: Could not scan skill at ${skillFile}:`,
         (error as Error).message,
       );
+    }
+  }
+
+  // Find all MCP manifest files
+  const mcpPatterns = [
+    join(directory, "**/mcp.json"),
+    join(directory, "**/server.json"),
+  ];
+
+  for (const pattern of mcpPatterns) {
+    const manifestFiles = await glob(pattern, {
+      ignore: ["**/node_modules/**"],
+    });
+
+    for (const manifestFile of manifestFiles) {
+      const manifestDir = dirname(manifestFile);
+      if (scanned.has(manifestDir)) continue;
+      scanned.add(manifestDir);
+
+      try {
+        const result = await scanSkill(manifestFile);
+        results.push(result);
+      } catch (error) {
+        console.warn(
+          `Warning: Could not scan MCP server at ${manifestFile}:`,
+          (error as Error).message,
+        );
+      }
     }
   }
 

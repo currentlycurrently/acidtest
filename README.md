@@ -1,17 +1,25 @@
 # AcidTest
 
-Security scanner for AI agent skills. Scan before you install.
+Security scanner for AI agent skills and MCP servers. Scan before you install.
 
 ## The Problem
 
-The AgentSkills ecosystem has 66,000+ skills. Recent audits found:
-- **26%** contain at least one vulnerability
+The AI agent ecosystem is growing rapidly with thousands of skills and MCP servers. Security concerns include:
+- **AgentSkills**: 66,000+ skills with 26% containing vulnerabilities
 - **230+** confirmed malicious skills uploaded to ClawHub in one week
 - **341** skills flagged in the ClawHavoc campaign
+- **MCP Servers**: New ecosystem with similar security risks
 
 ## Quick Start
 ```bash
+# See AcidTest in action
+npx acidtest demo
+
+# Scan an AgentSkills skill
 npx acidtest scan ./my-skill
+
+# Scan an MCP server
+npx acidtest scan ./my-mcp-server
 ```
 
 No API keys. No configuration. No Python.
@@ -48,6 +56,7 @@ RECOMMENDATION: Do not install. Prompt injection attempt detected.
 
 ## What It Detects
 
+**For AgentSkills:**
 - Prompt injection attempts
 - Undeclared network calls
 - Credential harvesting
@@ -55,9 +64,22 @@ RECOMMENDATION: Do not install. Prompt injection attempt detected.
 - Data exfiltration patterns
 - Obfuscated payloads
 
+**For MCP Servers:**
+- Dangerous command execution
+- Undeclared network access (SSE transport)
+- Environment variable credential requests
+- Shell binary access
+- Permission mismatches between manifest and code
+
 ## How It Works
 
-AcidTest runs four analysis layers: permission audit, prompt injection scan, code analysis (via TypeScript AST), and cross-reference checks that catch when code behavior doesn't match declared permissions.
+AcidTest runs four analysis layers:
+1. **Permission Audit**: Analyzes declared permissions (bins, env, tools)
+2. **Prompt Injection Scan**: Detects instruction override attempts (AgentSkills)
+3. **Code Analysis**: AST-based analysis of JavaScript/TypeScript files
+4. **Cross-Reference**: Catches code behavior not matching declared permissions
+
+Works with both SKILL.md (AgentSkills) and MCP manifests (mcp.json, server.json, package.json).
 
 ## Install
 ```bash
@@ -70,18 +92,76 @@ npx acidtest scan ./path-to-skill
 ```
 
 ## Usage
-```bash
-# Scan a skill directory
-acidtest scan ./my-skill
 
-# Scan a SKILL.md file directly
+### CLI Commands
+```bash
+# See AcidTest in action with demo fixtures
+acidtest demo
+
+# Scan an AgentSkills skill
+acidtest scan ./my-skill
 acidtest scan ./my-skill/SKILL.md
 
-# Scan all skills in a directory
-acidtest scan-all ./skills
+# Scan an MCP server
+acidtest scan ./my-mcp-server          # Auto-detects mcp.json, server.json, etc.
+acidtest scan ./server/mcp.json        # Direct manifest path
 
-# JSON output
+# Scan all skills/servers in a directory
+acidtest scan-all ./directory
+
+# JSON output for programmatic use
 acidtest scan ./my-skill --json
+
+# Start as MCP server (for AI agents)
+acidtest serve
+```
+
+### Use as MCP Server
+
+AcidTest can run as an MCP (Model Context Protocol) server, allowing AI agents like Claude to scan skills and MCP servers before installation.
+
+#### Claude Desktop Configuration
+
+Add to your `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "acidtest": {
+      "command": "npx",
+      "args": ["-y", "acidtest", "serve"]
+    }
+  }
+}
+```
+
+Or if installed globally:
+
+```json
+{
+  "mcpServers": {
+    "acidtest": {
+      "command": "acidtest",
+      "args": ["serve"]
+    }
+  }
+}
+```
+
+#### Available MCP Tools
+
+- **`scan_skill`**: Scan a single skill or MCP server
+  - Input: `{ "path": "/path/to/skill" }`
+  - Returns: Full scan result with trust score and findings
+
+- **`scan_all`**: Scan all skills/servers in a directory
+  - Input: `{ "directory": "/path/to/directory" }`
+  - Returns: Array of scan results
+
+Once configured, Claude can scan skills before installation:
+```
+User: "Can you scan this MCP server before I install it?"
+Claude: [Uses acidtest scan_skill tool to analyze the server]
 ```
 
 ## Scoring
