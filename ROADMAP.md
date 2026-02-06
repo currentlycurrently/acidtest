@@ -4,7 +4,12 @@ This document outlines the evolution of AcidTest, tracking completed features an
 
 ## Completed
 
-### v0.2.0 (Current)
+### v0.2.1 (Current)
+Patch release: Documentation fix
+
+- **Documentation correction** — Updated README example output to show correct v0.2.0 version
+
+### v0.2.0
 Focus: Agent integration and MCP server support
 
 - **MCP Server Wrapper** — AcidTest can now run as an MCP (Model Context Protocol) server, exposing security scanning as tools that AI agents like Claude can invoke before installing skills
