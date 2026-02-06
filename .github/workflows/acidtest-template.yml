@@ -1,0 +1,53 @@
+# AcidTest GitHub Action Template
+# Copy this file to your skill/MCP server repository as .github/workflows/acidtest.yml
+# Automatically scans for security issues on every PR
+
+name: Security Scan
+
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+
+jobs:
+  acidtest:
+    name: AcidTest Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run AcidTest
+        run: |
+          # Install and run AcidTest
+          npx acidtest@latest scan . --json > results.json
+
+          # Parse results
+          SCORE=$(jq -r '.score' results.json)
+          STATUS=$(jq -r '.status' results.json)
+
+          echo "🛡️ AcidTest Results"
+          echo "Score: $SCORE/100"
+          echo "Status: $STATUS"
+          echo ""
+
+          # Display findings
+          jq -r '.findings[] | "  [\(.severity)] \(.title)"' results.json || true
+
+          # Fail on FAIL or DANGER status
+          if [ "$STATUS" = "FAIL" ] || [ "$STATUS" = "DANGER" ]; then
+            echo ""
+            echo "❌ Security scan failed"
+            exit 1
+          fi
+
+          echo ""
+          echo "✅ Security scan passed"
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: acidtest-results
+          path: results.json

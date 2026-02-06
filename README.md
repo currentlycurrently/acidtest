@@ -26,7 +26,7 @@ No API keys. No configuration. No Python.
 
 ## Example Output
 ```
-AcidTest v0.3.0
+AcidTest v0.5.0
 
 Scanning: proactive-agent
 Source:   test-skills/proactive-agent-1-2-4-1
@@ -76,8 +76,13 @@ RECOMMENDATION: Do not install. Prompt injection attempt detected.
 AcidTest runs four analysis layers:
 1. **Permission Audit**: Analyzes declared permissions (bins, env, tools)
 2. **Prompt Injection Scan**: Detects instruction override attempts (AgentSkills)
-3. **Code Analysis**: AST-based analysis of JavaScript/TypeScript files
+3. **Code Analysis**: AST-based analysis + Shannon entropy detection for obfuscation
 4. **Cross-Reference**: Catches code behavior not matching declared permissions
+
+**Advanced Features:**
+- Entropy analysis detects base64/hex encoding and obfuscated strings
+- Pattern-based detection with 48 security patterns
+- CI/CD integration via GitHub Actions and pre-commit hooks
 
 Works with both SKILL.md (AgentSkills) and MCP manifests (mcp.json, server.json, package.json).
 
@@ -163,6 +168,54 @@ Once configured, Claude can scan skills before installation:
 User: "Can you scan this MCP server before I install it?"
 Claude: [Uses acidtest scan_skill tool to analyze the server]
 ```
+
+### Use in CI/CD
+
+Automate security scanning in your GitHub Actions workflows.
+
+#### Quick Setup
+
+Copy this workflow to `.github/workflows/acidtest.yml` in your skill repository:
+
+```yaml
+name: Security Scan
+
+on: [pull_request, push]
+
+jobs:
+  acidtest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npx acidtest@latest scan . --json > results.json
+      - run: |
+          STATUS=$(jq -r '.status' results.json)
+          if [ "$STATUS" = "FAIL" ] || [ "$STATUS" = "DANGER" ]; then
+            echo "❌ Security scan failed"
+            exit 1
+          fi
+```
+
+See [`.github/workflows/acidtest-template.yml`](.github/workflows/acidtest-template.yml) for a production-ready template, or [`.github/workflows/acidtest-example.yml`](.github/workflows/acidtest-example.yml) for advanced examples including:
+- Failure thresholds
+- Bulk scanning
+- PR comments
+- Artifact uploads
+
+#### Pre-Commit Hook
+
+Catch issues before committing:
+
+```bash
+# Install pre-commit hook
+curl -o .git/hooks/pre-commit https://raw.githubusercontent.com/currentlycurrently/acidtest/main/hooks/pre-commit
+chmod +x .git/hooks/pre-commit
+
+# Now every commit runs AcidTest automatically
+git commit -m "Add new feature"  # Scans before committing
+```
+
+See [`hooks/README.md`](hooks/README.md) for installation options and configuration.
 
 ## Scoring
 

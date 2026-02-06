@@ -1,0 +1,156 @@
+# Example GitHub Actions workflow for AcidTest
+# This file demonstrates how to use AcidTest in CI/CD pipelines
+# Copy and adapt this to your skill/MCP server repository
+
+name: AcidTest Security Scan
+
+on:
+  pull_request:
+    paths:
+      - '**.ts'
+      - '**.js'
+      - '**/SKILL.md'
+      - '**/mcp.json'
+      - '**/server.json'
+  push:
+    branches: [main]
+
+jobs:
+  # Example 1: Simple scan
+  scan-simple:
+    name: Simple Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run AcidTest
+        run: npx acidtest@latest scan .
+
+  # Example 2: Scan with failure threshold
+  scan-with-threshold:
+    name: Scan with Threshold
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run AcidTest
+        id: acidtest
+        run: |
+          # Run scan and capture output
+          npx acidtest@latest scan . --json > scan-results.json
+
+          # Parse results
+          SCORE=$(jq -r '.score' scan-results.json)
+          STATUS=$(jq -r '.status' scan-results.json)
+
+          echo "score=$SCORE" >> $GITHUB_OUTPUT
+          echo "status=$STATUS" >> $GITHUB_OUTPUT
+
+          # Display results
+          cat scan-results.json | jq '.'
+
+          # Fail if status is FAIL or DANGER
+          if [ "$STATUS" = "FAIL" ] || [ "$STATUS" = "DANGER" ]; then
+            echo "❌ Security scan failed with status: $STATUS (score: $SCORE)"
+            exit 1
+          elif [ "$STATUS" = "WARN" ]; then
+            echo "⚠️  Security scan warning: $STATUS (score: $SCORE)"
+            echo "Review findings before merging"
+          else
+            echo "✅ Security scan passed: $STATUS (score: $SCORE)"
+          fi
+
+      - name: Upload scan results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: acidtest-results
+          path: scan-results.json
+
+  # Example 3: Scan all skills in directory
+  scan-all:
+    name: Scan All Skills
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run AcidTest on all skills
+        run: |
+          npx acidtest@latest scan-all ./skills --json > results.json
+
+          # Check if any skill failed
+          FAILURES=$(jq '[.[] | select(.status == "FAIL" or .status == "DANGER")] | length' results.json)
+
+          if [ "$FAILURES" -gt 0 ]; then
+            echo "❌ $FAILURES skill(s) failed security scan"
+            jq -r '.[] | select(.status == "FAIL" or .status == "DANGER") | "  - \(.skill.name): \(.status) (score: \(.score))"' results.json
+            exit 1
+          else
+            echo "✅ All skills passed security scan"
+          fi
+
+  # Example 4: Comment results on PR (requires GITHUB_TOKEN with write permissions)
+  scan-and-comment:
+    name: Scan and Comment
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    permissions:
+      pull-requests: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run AcidTest
+        id: scan
+        run: |
+          npx acidtest@latest scan . --json > scan-results.json
+
+          SCORE=$(jq -r '.score' scan-results.json)
+          STATUS=$(jq -r '.status' scan-results.json)
+          RECOMMENDATION=$(jq -r '.recommendation' scan-results.json)
+
+          echo "score=$SCORE" >> $GITHUB_OUTPUT
+          echo "status=$STATUS" >> $GITHUB_OUTPUT
+
+          # Create markdown comment
+          cat > comment.md << 'EOF'
+          ## 🛡️ AcidTest Security Scan
+
+          **Score:** $SCORE/100
+          **Status:** $STATUS
+
+          **Recommendation:** $RECOMMENDATION
+
+          <details>
+          <summary>View full results</summary>
+
+          ```json
+          EOF
+
+          cat scan-results.json | jq '.' >> comment.md
+
+          cat >> comment.md << 'EOF'
+          ```
+
+          </details>
+          EOF
+
+      - name: Comment PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const comment = fs.readFileSync('comment.md', 'utf8');
+
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: comment
+            });
+
+      - name: Fail if dangerous
+        if: steps.scan.outputs.status == 'FAIL' || steps.scan.outputs.status == 'DANGER'
+        run: |
+          echo "❌ Security scan failed"
+          exit 1

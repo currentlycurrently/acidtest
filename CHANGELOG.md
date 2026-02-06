@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-02-06
+
+### Added
+- **GitHub Actions Integration**: CI/CD workflow templates for automated security scanning
+  - `.github/workflows/acidtest-template.yml` - Production-ready template for copying to skill repos
+  - `.github/workflows/acidtest-example.yml` - Comprehensive examples with multiple scan strategies
+  - Supports pull request scanning, failure thresholds, bulk scanning, and PR comments
+  - JSON output parsing for custom workflows
+  - Artifact upload for scan results
+- **Pre-Commit Hook**: Git hook template for local development workflows
+  - `hooks/pre-commit` - Executable hook script with automatic install instructions
+  - Blocks commits on DANGER status (configurable to block on FAIL)
+  - Displays findings summary before commit
+  - Auto-detects acidtest or uses npx if not installed
+  - Bypass support with `--no-verify` flag
+- **Documentation**: Comprehensive guides for CI/CD integration
+  - `hooks/README.md` - Installation and configuration instructions
+  - Multiple installation methods (copy, download, symlink)
+  - Troubleshooting guide
+
+### Changed
+- README.md updated with CI/CD integration section
+- Repository now includes reference workflows for community use
+
+### Use Cases Unlocked
+- Automated skill/MCP server scanning in GitHub Actions
+- Pre-commit validation for developers
+- Team/enterprise adoption via CI/CD pipelines
+- Automatic PR rejection for malicious contributions
+
 ## [0.4.0] - 2026-02-06
 
 ### Added

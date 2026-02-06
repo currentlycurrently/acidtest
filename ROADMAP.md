@@ -4,7 +4,15 @@ This document outlines the evolution of AcidTest, tracking completed features an
 
 ## Completed
 
-### v0.4.0 (Current)
+### v0.5.0 (Current)
+Focus: CI/CD integration and automation
+
+- **GitHub Actions workflows** — Production-ready templates for automated security scanning in CI/CD pipelines
+- **Pre-commit hook** — Git hook template blocks malicious commits before they reach the repository
+- **Workflow examples** — Multiple strategies: simple scan, threshold-based, bulk scanning, PR comments
+- **Team adoption** — Unlocks enterprise/organization-wide deployment
+
+### v0.4.0
 Focus: Advanced obfuscation detection
 
 - **Entropy-based obfuscation detection** — Shannon entropy analysis automatically detects high-entropy strings (>4.5) that may indicate base64 encoding, hex encoding, or other obfuscation techniques
@@ -43,15 +51,7 @@ Focus: Agent integration and MCP server support
 
 ## Planned
 
-### v0.5.0 (Next Release)
-Focus: Ecosystem integration and tooling
-
-**Priority: High | Complexity: Low-Medium**
-- **GitHub Action** — Pre-built action for CI/CD pipelines to automatically scan skills on PR/commit with configurable thresholds
-- **Pre-commit hook template** — Git hook template for local development workflows
-- **VS Code extension** — Real-time scanning as you edit SKILL.md with inline warnings
-
-### v0.6.0
+### v0.6.0 (Next Release)
 Focus: Enhanced AST analysis and dataflow tracking
 
 **Priority: Medium | Complexity: High**

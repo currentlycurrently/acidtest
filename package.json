@@ -1,6 +1,6 @@
 {
   "name": "acidtest",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "type": "module",
   "description": "Security scanner for AI agent skills. Scan before you install.",
   "bin": {
@@ -14,7 +14,9 @@
   },
   "files": [
     "dist",
-    "test-fixtures"
+    "test-fixtures",
+    ".github",
+    "hooks"
   ],
   "keywords": [
     "security",

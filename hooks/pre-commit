@@ -1,0 +1,74 @@
+#!/bin/bash
+# AcidTest Pre-Commit Hook
+#
+# Installation:
+#   1. Copy this file to .git/hooks/pre-commit
+#   2. Make it executable: chmod +x .git/hooks/pre-commit
+#
+# Or use this one-liner:
+#   curl -o .git/hooks/pre-commit https://raw.githubusercontent.com/currentlycurrently/acidtest/main/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+#
+# This hook runs AcidTest before each commit to catch security issues early
+
+set -e
+
+echo "🛡️  Running AcidTest security scan..."
+
+# Check if acidtest is installed
+if ! command -v acidtest &> /dev/null; then
+    echo "⚠️  acidtest not found, using npx..."
+    ACIDTEST_CMD="npx -y acidtest@latest"
+else
+    ACIDTEST_CMD="acidtest"
+fi
+
+# Run scan with JSON output
+$ACIDTEST_CMD scan . --json > /tmp/acidtest-results.json 2>&1 || true
+
+# Parse results
+SCORE=$(jq -r '.score' /tmp/acidtest-results.json 2>/dev/null || echo "0")
+STATUS=$(jq -r '.status' /tmp/acidtest-results.json 2>/dev/null || echo "UNKNOWN")
+
+echo ""
+echo "Score:  $SCORE/100"
+echo "Status: $STATUS"
+
+# Display critical/high findings
+CRITICAL_COUNT=$(jq '[.findings[] | select(.severity == "CRITICAL")] | length' /tmp/acidtest-results.json 2>/dev/null || echo "0")
+HIGH_COUNT=$(jq '[.findings[] | select(.severity == "HIGH")] | length' /tmp/acidtest-results.json 2>/dev/null || echo "0")
+
+if [ "$CRITICAL_COUNT" -gt 0 ] || [ "$HIGH_COUNT" -gt 0 ]; then
+    echo ""
+    echo "Findings:"
+    jq -r '.findings[] | select(.severity == "CRITICAL" or .severity == "HIGH") | "  [\(.severity)] \(.title): \(.detail)"' /tmp/acidtest-results.json 2>/dev/null || true
+fi
+
+echo ""
+
+# Decide whether to block commit
+if [ "$STATUS" = "DANGER" ]; then
+    echo "❌ Commit blocked: DANGER status detected"
+    echo "   Fix critical security issues before committing"
+    echo ""
+    echo "   To bypass this check (NOT recommended):"
+    echo "   git commit --no-verify"
+    exit 1
+elif [ "$STATUS" = "FAIL" ]; then
+    echo "⚠️  Warning: FAIL status detected"
+    echo "   Consider fixing security issues before committing"
+    echo ""
+    echo "   To bypass this check:"
+    echo "   git commit --no-verify"
+    # Uncomment the next line to block commits on FAIL status:
+    # exit 1
+elif [ "$STATUS" = "WARN" ]; then
+    echo "⚠️  Warning: Security concerns detected (score: $SCORE)"
+    echo "   Review findings before pushing"
+else
+    echo "✅ Security scan passed"
+fi
+
+# Cleanup
+rm -f /tmp/acidtest-results.json
+
+exit 0
