@@ -24,4 +24,4 @@ npm-debug.log*
 
 # Environment (shouldn't exist but just in case)
 .env
-.env.local
+.env.local.DS_Store
