@@ -20,30 +20,65 @@ jobs:
 
       - name: Run AcidTest
         run: |
-          # Install and run AcidTest
-          npx acidtest@latest scan . --json > results.json
+          # Detect if we're scanning the acidtest repo itself
+          if [ -d "test-fixtures" ] && [ -f "src/scanner.ts" ]; then
+            echo "📦 Detected acidtest repository - scanning test fixtures"
+            npx acidtest@latest scan-all test-fixtures --json > results.json
 
-          # Parse results
-          SCORE=$(jq -r '.score' results.json)
-          STATUS=$(jq -r '.status' results.json)
+            # For scan-all, check if array is empty or has errors
+            if [ "$(jq '. | length' results.json)" -eq 0 ]; then
+              echo "❌ No fixtures found to scan"
+              exit 1
+            fi
 
-          echo "🛡️ AcidTest Results"
-          echo "Score: $SCORE/100"
-          echo "Status: $STATUS"
-          echo ""
+            # Check for any failures in the array
+            FAILURES=$(jq '[.[] | select(.status == "FAIL" or .status == "DANGER")] | length' results.json)
 
-          # Display findings
-          jq -r '.findings[] | "  [\(.severity)] \(.title)"' results.json || true
+            echo "🛡️ AcidTest Results (Test Fixtures)"
+            jq -r '.[] | "  \(.skill.name): \(.status) (\(.score)/100)"' results.json
 
-          # Fail on FAIL or DANGER status
-          if [ "$STATUS" = "FAIL" ] || [ "$STATUS" = "DANGER" ]; then
+            if [ "$FAILURES" -gt 0 ]; then
+              echo ""
+              echo "❌ $FAILURES fixture(s) failed"
+              exit 1
+            fi
+
             echo ""
-            echo "❌ Security scan failed"
-            exit 1
-          fi
+            echo "✅ All fixtures passed"
+          else
+            # Standard scan for skill/MCP repositories
+            npx acidtest@latest scan . --json > results.json
 
-          echo ""
-          echo "✅ Security scan passed"
+            # Check for error status
+            STATUS=$(jq -r '.status' results.json)
+
+            if [ "$STATUS" = "ERROR" ]; then
+              ERROR_MSG=$(jq -r '.error' results.json)
+              echo "❌ Error: $ERROR_MSG"
+              exit 1
+            fi
+
+            # Parse results
+            SCORE=$(jq -r '.score' results.json)
+
+            echo "🛡️ AcidTest Results"
+            echo "Score: $SCORE/100"
+            echo "Status: $STATUS"
+            echo ""
+
+            # Display findings
+            jq -r '.findings[] | "  [\(.severity)] \(.title)"' results.json || true
+
+            # Fail on FAIL or DANGER status
+            if [ "$STATUS" = "FAIL" ] || [ "$STATUS" = "DANGER" ]; then
+              echo ""
+              echo "❌ Security scan failed"
+              exit 1
+            fi
+
+            echo ""
+            echo "✅ Security scan passed"
+          fi
 
       - name: Upload results
         if: always()

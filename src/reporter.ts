@@ -182,6 +182,8 @@ function getStatusColor(status: Status): typeof chalk.red {
       return chalk.red.bold;
     case 'DANGER':
       return chalk.red.bold.bgRed;
+    case 'ERROR':
+      return chalk.red.bold;
   }
 }
 

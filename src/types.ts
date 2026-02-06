@@ -4,7 +4,7 @@
 
 export type Severity = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' | 'INFO';
 
-export type Status = 'PASS' | 'WARN' | 'FAIL' | 'DANGER';
+export type Status = 'PASS' | 'WARN' | 'FAIL' | 'DANGER' | 'ERROR';
 
 export type Layer = 'permissions' | 'markdown' | 'code' | 'crossref';
 
@@ -115,6 +115,17 @@ export interface ScanResult {
   };
   findings: Finding[];
   recommendation: string;
+}
+
+/**
+ * Error result for failed scans
+ */
+export interface ErrorResult {
+  schemaVersion: string;
+  tool: string;
+  version: string;
+  status: 'ERROR';
+  error: string;
 }
 
 /**

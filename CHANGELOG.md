@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] - 2026-02-06
+
+### Fixed
+- **JSON Error Handling**: When `--json` flag is used, errors now output valid JSON instead of stderr messages
+  - Errors now return structured JSON: `{"status": "ERROR", "error": "message", ...}`
+  - Fixes GitHub Actions workflows failing silently when no SKILL.md/MCP manifest found
+  - Improves integration with CI/CD pipelines and programmatic usage
+- **GitHub Actions Workflows**: Templates now work correctly on acidtest repository itself
+  - Auto-detects acidtest repo and scans `test-fixtures` instead of root directory
+  - Handles ERROR status properly in all workflow examples
+  - Prevents workflow failures when running on the acidtest repository
+  - Still functions correctly as templates for users to copy to their skill/MCP repos
+
+### Changed
+- Error output format when using `--json` flag is now consistent with scan results
+- GitHub Actions workflows now serve dual purpose: testing acidtest + user templates
+
 ## [0.5.0] - 2026-02-06
 
 ### Added

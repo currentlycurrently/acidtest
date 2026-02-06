@@ -24,7 +24,13 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Run AcidTest
-        run: npx acidtest@latest scan .
+        run: |
+          # Detect if we're in acidtest repo, scan fixtures instead
+          if [ -d "test-fixtures" ] && [ -f "src/scanner.ts" ]; then
+            npx acidtest@latest scan test-fixtures/fixture-pass
+          else
+            npx acidtest@latest scan .
+          fi
 
   # Example 2: Scan with failure threshold
   scan-with-threshold:
@@ -36,12 +42,24 @@ jobs:
       - name: Run AcidTest
         id: acidtest
         run: |
-          # Run scan and capture output
-          npx acidtest@latest scan . --json > scan-results.json
+          # Detect if we're in acidtest repo, scan fixtures instead
+          if [ -d "test-fixtures" ] && [ -f "src/scanner.ts" ]; then
+            npx acidtest@latest scan test-fixtures/fixture-pass --json > scan-results.json
+          else
+            npx acidtest@latest scan . --json > scan-results.json
+          fi
 
           # Parse results
-          SCORE=$(jq -r '.score' scan-results.json)
           STATUS=$(jq -r '.status' scan-results.json)
+
+          # Check for error status
+          if [ "$STATUS" = "ERROR" ]; then
+            ERROR_MSG=$(jq -r '.error' scan-results.json)
+            echo "❌ Error: $ERROR_MSG"
+            exit 1
+          fi
+
+          SCORE=$(jq -r '.score' scan-results.json)
 
           echo "score=$SCORE" >> $GITHUB_OUTPUT
           echo "status=$STATUS" >> $GITHUB_OUTPUT
@@ -76,7 +94,19 @@ jobs:
 
       - name: Run AcidTest on all skills
         run: |
-          npx acidtest@latest scan-all ./skills --json > results.json
+          # Detect if we're in acidtest repo, scan fixtures instead
+          if [ -d "test-fixtures" ] && [ -f "src/scanner.ts" ]; then
+            npx acidtest@latest scan-all test-fixtures --json > results.json
+          else
+            npx acidtest@latest scan-all ./skills --json > results.json
+          fi
+
+          # Check for error (single object instead of array)
+          if [ "$(jq 'type' results.json)" = '"object"' ] && [ "$(jq -r '.status' results.json)" = "ERROR" ]; then
+            ERROR_MSG=$(jq -r '.error' results.json)
+            echo "❌ Error: $ERROR_MSG"
+            exit 1
+          fi
 
           # Check if any skill failed
           FAILURES=$(jq '[.[] | select(.status == "FAIL" or .status == "DANGER")] | length' results.json)
@@ -103,10 +133,24 @@ jobs:
       - name: Run AcidTest
         id: scan
         run: |
-          npx acidtest@latest scan . --json > scan-results.json
+          # Detect if we're in acidtest repo, scan fixtures instead
+          if [ -d "test-fixtures" ] && [ -f "src/scanner.ts" ]; then
+            npx acidtest@latest scan test-fixtures/fixture-pass --json > scan-results.json
+          else
+            npx acidtest@latest scan . --json > scan-results.json
+          fi
+
+          STATUS=$(jq -r '.status' scan-results.json)
+
+          # Check for error status
+          if [ "$STATUS" = "ERROR" ]; then
+            ERROR_MSG=$(jq -r '.error' scan-results.json)
+            echo "❌ Error: $ERROR_MSG"
+            echo "status=ERROR" >> $GITHUB_OUTPUT
+            exit 1
+          fi
 
           SCORE=$(jq -r '.score' scan-results.json)
-          STATUS=$(jq -r '.status' scan-results.json)
           RECOMMENDATION=$(jq -r '.recommendation' scan-results.json)
 
           echo "score=$SCORE" >> $GITHUB_OUTPUT

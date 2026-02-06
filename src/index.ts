@@ -7,11 +7,12 @@
 
 import { scanSkill, scanAllSkills } from "./scanner.js";
 import { reportToTerminal, reportAsJSON } from "./reporter.js";
+import type { ErrorResult } from "./types.js";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { spawn } from "child_process";
 
-const VERSION = "0.5.0";
+const VERSION = "0.5.1";
 
 /**
  * Main CLI function
@@ -79,7 +80,19 @@ async function handleScan(args: string[]) {
       process.exit(1);
     }
   } catch (error) {
-    console.error("Error scanning skill:", (error as Error).message);
+    if (jsonOutput) {
+      // Output error as JSON for programmatic use
+      const errorResult: ErrorResult = {
+        schemaVersion: "1.0.0",
+        tool: "acidtest",
+        version: VERSION,
+        status: "ERROR",
+        error: (error as Error).message,
+      };
+      console.log(JSON.stringify(errorResult, null, 2));
+    } else {
+      console.error("Error scanning skill:", (error as Error).message);
+    }
     process.exit(1);
   }
 }
@@ -148,7 +161,19 @@ async function handleScanAll(args: string[]) {
       process.exit(1);
     }
   } catch (error) {
-    console.error("Error scanning directory:", (error as Error).message);
+    if (jsonOutput) {
+      // Output error as JSON for programmatic use
+      const errorResult: ErrorResult = {
+        schemaVersion: "1.0.0",
+        tool: "acidtest",
+        version: VERSION,
+        status: "ERROR",
+        error: (error as Error).message,
+      };
+      console.log(JSON.stringify(errorResult, null, 2));
+    } else {
+      console.error("Error scanning directory:", (error as Error).message);
+    }
     process.exit(1);
   }
 }
