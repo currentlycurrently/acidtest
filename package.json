@@ -1,6 +1,6 @@
 {
   "name": "acidtest",
-  "version": "0.5.3",
+  "version": "0.6.0",
   "type": "module",
   "description": "Security scanner for AI agent skills. Scan before you install.",
   "bin": {
@@ -10,7 +10,11 @@
     "validate": "node scripts/validate-patterns.js",
     "build": "node scripts/validate-patterns.js && tsc && mkdir -p dist/patterns && cp src/patterns/*.json dist/patterns/",
     "dev": "npm run build && node dist/index.js",
-    "watch": "tsc --watch"
+    "watch": "tsc --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage"
   },
   "files": [
     "dist",
@@ -43,7 +47,9 @@
     "typescript": "^5.3.3"
   },
   "devDependencies": {
-    "@types/node": "^20.11.0"
+    "@types/node": "^20.11.0",
+    "@vitest/ui": "^4.0.18",
+    "vitest": "^4.0.18"
   },
   "engines": {
     "node": ">=18.0.0"

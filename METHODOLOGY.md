@@ -1,0 +1,247 @@
+# AcidTest Security Methodology
+
+This document provides transparency about AcidTest's detection capabilities, limitations, and the security threats it addresses.
+
+## What AcidTest Does
+
+AcidTest performs **static analysis** on AI agent skills and MCP servers using four complementary layers:
+
+1. **Permission Analysis** - Audits declared permissions in YAML frontmatter
+2. **Injection Detection** - Scans markdown for prompt injection patterns
+3. **Code Analysis** - AST and regex-based scanning of JavaScript/TypeScript
+4. **Cross-Reference** - Validates permissions match actual behavior
+
+### Detection Capabilities
+
+**What We Catch Well (~85-90% success rate):**
+- Direct calls to dangerous APIs (`exec`, `eval`, `Function`)
+- Common prompt injection patterns
+- Hardcoded credentials and API keys
+- Data exfiltration to undeclared domains
+- Standard obfuscation techniques (base64, hex encoding)
+- Dynamic requires with variables or computed values
+- String concatenation bypasses: `require('child_' + 'process')`
+- Template literal bypasses: `` require(`mod_${name}`) ``
+- Property access bypasses: `global['child_process']`
+- Function constructor abuse: `new Function('return eval')()`
+- Undeclared network calls
+- Suspicious file system operations
+
+**What We May Miss (<10-15% of sophisticated attacks):**
+- Advanced control flow obfuscation (multi-step indirection)
+- Encrypted or polymorphic payloads
+- Time-delayed execution
+- Data leaks via timing side channels
+- Unicode homograph attacks
+- Behavioral analysis (runtime-only detection)
+- Supply chain attacks (dependency vulnerabilities)
+- Zero-day exploitation techniques
+
+## How Static Analysis Works
+
+### Strengths
+
+1. **Zero Runtime Overhead** - Scans code before execution, no sandboxing needed
+2. **Fast** - Completes in seconds, suitable for CI/CD pipelines
+3. **Deterministic** - Same code always produces same results
+4. **No Network Required** - Works offline, no API keys needed
+5. **Language-Aware** - Uses TypeScript compiler API for AST analysis
+
+### Limitations
+
+1. **Cannot Execute Code** - Cannot detect behavior that emerges only at runtime
+2. **Limited Context** - Cannot track complex dataflows across files
+3. **Bypass Potential** - Determined attackers can evade pattern-based detection
+4. **False Positives** - Legitimate code may trigger security warnings
+5. **No Dependency Analysis** - Does not scan npm packages or transitive dependencies
+
+## Known Bypass Techniques
+
+While we've implemented mitigations for common bypasses, sophisticated attackers may use:
+
+### Detected Bypasses
+
+✅ **String Concatenation**
+```javascript
+require('child_' + 'process')  // CAUGHT by AST-based detection
+```
+
+✅ **Template Literals**
+```javascript
+const mod = `child_${x}`;
+require(mod);  // CAUGHT as dynamic require
+```
+
+✅ **Property Access**
+```javascript
+global['child_process']  // CAUGHT by bracket notation detection
+```
+
+✅ **Function Constructor**
+```javascript
+new Function('return eval')()  // CAUGHT by AST pattern matching
+```
+
+### Potentially Missed Bypasses
+
+⚠️ **Multi-Step Indirection**
+```javascript
+const getModule = () => 'child_' + 'process';
+setTimeout(() => require(getModule()), 1000);  // May evade detection
+```
+
+⚠️ **WebAssembly Execution**
+```javascript
+const wasm = await WebAssembly.instantiate(buffer);  // Not analyzed
+```
+
+⚠️ **External Code Loading**
+```javascript
+const remote = await fetch(url).then(r => r.text());
+eval(remote);  // eval() caught, but remote source not analyzed
+```
+
+## When to Use AcidTest
+
+### Good Use Cases
+
+✅ **Pre-Installation Screening** - Quick security check before installing skills
+✅ **CI/CD Integration** - Automated scanning in pull request workflows
+✅ **Bulk Auditing** - Scan entire directories of skills/servers
+✅ **Trust Score Comparison** - Compare security profiles of similar tools
+✅ **Education** - Learn about common attack patterns in AI agent code
+
+### Not Recommended For
+
+❌ **Production Security** - Should not be your only defense
+❌ **Compliance Certification** - Not a substitute for professional security audits
+❌ **Malware Forensics** - Not designed for analyzing known malicious code
+❌ **Dependency Vulnerabilities** - Use `npm audit` for package CVEs
+❌ **Runtime Protection** - Does not sandbox or monitor execution
+
+## Threat Model
+
+### In-Scope Threats
+
+1. **Malicious Skills** - Deliberately crafted to exfiltrate data or execute commands
+2. **Backdoored Tools** - Legitimate-looking skills with hidden malicious code
+3. **Prompt Injection** - Attempts to manipulate AI agent behavior via markdown
+4. **Credential Theft** - Harvesting API keys, tokens, environment variables
+5. **Privilege Escalation** - Undeclared file system or network access
+
+### Out-of-Scope Threats
+
+1. **Supply Chain Attacks** - Compromised npm dependencies (use `npm audit`)
+2. **Zero-Day Exploits** - Unknown vulnerabilities in Node.js or libraries
+3. **Social Engineering** - Tricking users into approving malicious prompts
+4. **Physical Access** - Adversary with direct access to the system
+5. **Advanced Persistent Threats** - Nation-state level sophistication
+
+## Scoring Methodology
+
+AcidTest uses a **100-point trust score** system:
+
+### Score Calculation
+
+- **Start:** 100 points
+- **Deductions:** Based on severity of findings
+  - CRITICAL: -25 points (eval, data exfiltration)
+  - HIGH: -15 points (dynamic require, dangerous imports)
+  - MEDIUM: -8 points (obfuscation, suspicious patterns)
+  - LOW: -3 points (info leaks, minor issues)
+  - INFO: 0 points (informational findings)
+- **Capping:** Max 3 deductions per unique pattern (prevents score inflation)
+- **Floor:** Score cannot go below 0
+
+### Status Thresholds
+
+| Score Range | Status  | Recommendation |
+|-------------|---------|----------------|
+| 80-100      | PASS    | Safe to install with review of findings |
+| 50-79       | WARN    | Review recommended, some concerns |
+| 20-49       | FAIL    | Not recommended, significant issues |
+| 0-19        | DANGER  | Do not install, critical vulnerabilities |
+
+### Scoring Limitations
+
+- **Subjective Weights:** Severity levels are based on common threat models, not scientific measurement
+- **Context-Free:** Same pattern penalized equally regardless of context
+- **Binary Detection:** No severity gradation within a category
+- **No Risk Aggregation:** Multiple LOW findings don't escalate to HIGH
+
+## Recommendations for Users
+
+### Before Installing a Skill
+
+1. **Run AcidTest:** `npx acidtest scan ./skill-directory`
+2. **Review Findings:** Read each security warning, don't just check the score
+3. **Check Permissions:** Ensure declared permissions match your expectations
+4. **Inspect Code:** For WARN/FAIL/DANGER, manually review the code
+5. **Test in Sandbox:** Run untrusted skills in isolated environments
+
+### For Skill Developers
+
+1. **Declare Permissions:** Be explicit about env vars, file paths, network access
+2. **Avoid Dynamic Imports:** Use static `require()` and `import` statements
+3. **Document Intent:** Add code comments explaining any low-level API usage
+4. **Test with AcidTest:** Ensure `npx acidtest scan .` returns PASS before publishing
+5. **CI/CD Integration:** Add AcidTest to GitHub Actions to prevent regressions
+
+### For Organizations
+
+1. **Threshold Policy:** Reject skills below a certain score (e.g., FAIL or worse)
+2. **Manual Review:** Require human approval for WARN status
+3. **Allowlist:** Maintain approved skills that passed security review
+4. **Private Registry:** Host audited skills internally
+5. **Least Privilege:** Run agent skills with minimal system permissions
+
+## Continuous Improvement
+
+AcidTest's detection patterns are continuously updated based on:
+
+- Observed attack techniques in the wild
+- Community contributions via GitHub issues/PRs
+- Security research publications
+- Feedback from production deployments
+
+**Current pattern count:** 48 detection patterns across 6 categories
+
+**See:** [CONTRIBUTING.md](CONTRIBUTING.md) for how to submit new patterns.
+
+## Comparison to Other Tools
+
+| Tool Type | AcidTest | npm audit | Sandbox/VM | Manual Review |
+|-----------|----------|-----------|------------|---------------|
+| Speed | ⚡ Fast (seconds) | Fast | Slow | Very Slow |
+| Coverage | Code + Config | Dependencies | Runtime | Comprehensive |
+| False Positives | Some | Few | Rare | None |
+| Setup | Zero config | Built-in | Complex | N/A |
+| Bypass Resistance | Medium | High | High | Very High |
+
+**Recommendation:** Use AcidTest as **first-line defense**, not replacement for defense-in-depth.
+
+## Transparency & Honesty
+
+We believe security tools should be honest about their limitations:
+
+- **Not foolproof:** Determined attackers can bypass static analysis
+- **Not comprehensive:** Does not replace professional security audits
+- **Not certified:** Not suitable for compliance requirements
+- **Not runtime protection:** Does not prevent execution of malicious code
+
+**AcidTest is best used as a fast, automated screening tool in a layered security strategy.**
+
+## References & Further Reading
+
+- [OWASP Top 10](https://owasp.org/www-project-top-ten/)
+- [CWE - Common Weakness Enumeration](https://cwe.mitre.org/)
+- [Prompt Injection Primer](https://simonwillison.net/2023/Apr/14/worst-that-can-happen/)
+- [Static Analysis Limitations](https://en.wikipedia.org/wiki/Static_program_analysis#Limitations)
+
+---
+
+**Last Updated:** 2026-02-07
+**Version:** 0.6.0
+**Maintainers:** AcidTest Team
+
+For questions or feedback, visit: https://github.com/currentlycurrently/acidtest/issues

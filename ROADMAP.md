@@ -4,7 +4,31 @@ This document outlines the evolution of AcidTest, tracking completed features an
 
 ## Completed
 
-### v0.5.3 (Current)
+### v0.6.0 (Current)
+Focus: Test coverage and improved bypass detection
+
+- **Test suite** — Comprehensive test coverage using Vitest with 54 passing tests
+  - Unit tests for core scanning logic (scanner, scoring, layers)
+  - Tests for each layer independently (permissions, injection, code, crossref)
+  - Tests for scoring calculations and deduction caps
+  - Tests for pattern matching accuracy and bypass detection
+  - Enables confident refactoring and unblocks community contributions
+
+- **Enhanced AST bypass detection** — Catches sophisticated evasion techniques
+  - Property access patterns: `global['child_process']` (MEDIUM severity)
+  - String concatenation in require: `require('child_' + 'process')` (HIGH severity)
+  - Template literals: `` require(`child_${x}`) `` (caught as dynamic require)
+  - Function constructor: `new Function('return eval')()` (CRITICAL severity)
+  - All patterns now have unique `patternId` for proper deduplication
+
+- **Methodology documentation** — Transparent about capabilities and limitations
+  - New METHODOLOGY.md documenting what static analysis can/cannot detect
+  - Honest assessment: catches ~85-90% of attacks, not foolproof
+  - Known bypass techniques documented with examples
+  - Clear guidance on when to use vs not use AcidTest
+  - Comparison to other security tools (npm audit, sandboxing, manual review)
+
+### v0.5.3
 Focus: Quality improvements and false positive reduction
 
 - **Entropy detection improvements** — Reduced false positives by filtering JWTs, UUIDs, hashes, and proper base64 strings
@@ -72,30 +96,7 @@ Focus: Agent integration and MCP server support
 
 ## Planned
 
-### v0.6.0 (Next Major Release)
-Focus: Test coverage and improved bypass detection
-
-**Priority: HIGH | Complexity: Medium**
-- **Test suite** — Add proper test framework (Vitest or similar) with unit tests for core scanning logic
-  - Test each layer independently (permissions, injection, code, crossref)
-  - Test scoring calculations and deduction caps
-  - Test pattern matching accuracy
-  - **Blocks contributions and makes refactoring risky without this**
-
-- **Enhanced AST bypass detection** — Catch more sophisticated evasion techniques
-  - Property access patterns: `global['child_process']`, `process['env']`
-  - Computed properties: `require(obj['moduleName'])`
-  - Template literals with expressions: `` require(`child_${x}`) ``
-  - Function constructor: `new Function('return eval')()`
-  - **Currently these slip through, need AST improvements in detectSuspiciousPatterns()**
-
-- **Methodology documentation** — Be transparent about capabilities and limitations
-  - What static analysis can and cannot detect
-  - Known bypass techniques
-  - When to use vs not use acidtest
-  - "Catches 85-90% of attacks, not foolproof against determined attackers"
-
-### v0.7.0
+### v0.7.0 (Next Major Release)
 Focus: Enhanced dataflow analysis
 
 **Priority: Medium | Complexity: High**

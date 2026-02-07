@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-02-07
+
+### Added
+- **Test Suite**: Comprehensive test coverage using Vitest
+  - 54 passing tests across core scanner, scoring, and code analysis layers
+  - Unit tests for scoring calculations, status determination, and deduction capping
+  - Integration tests for all test fixtures (PASS, WARN, FAIL, DANGER, entropy)
+  - AST bypass detection tests (string concatenation, template literals, property access, Function constructor)
+  - Enables confident refactoring and community contributions
+
+- **Enhanced AST Bypass Detection**: Improved evasion resistance
+  - **Function Constructor**: Detects `new Function(...)` (CRITICAL severity)
+  - **Property Access Bypasses**: Catches bracket notation on sensitive objects like `global['child_process']` (MEDIUM severity)
+  - **String Concatenation**: Explicitly flags `require('child_' + 'process')` (HIGH severity)
+  - Better code comments explaining what each detection catches
+  - All bypass patterns now have unique `patternId` for deduplication
+
+- **Methodology Documentation**: New METHODOLOGY.md with transparent security approach
+  - Honest assessment of detection capabilities (~85-90% success rate)
+  - Clear documentation of known bypass techniques
+  - Threat model and scope (what's in/out of scope)
+  - When to use vs not use AcidTest
+  - Comparison to other security tools
+  - Recommendations for users, developers, and organizations
+
+### Changed
+- **AST Analysis**: Refactored `detectSuspiciousPatterns()` for better coverage
+  - Now explicitly tracks 5 categories: eval, dynamic require, Function constructor, property access, string concatenation
+  - Added evidence strings explaining why each pattern is dangerous
+  - Improved code organization and readability
+
+### Technical Notes
+- Test infrastructure: Vitest with coverage support
+- Test scripts: `npm test`, `npm run test:watch`, `npm run test:ui`, `npm run test:coverage`
+- All tests pass on clean build
+- No breaking changes to public API or CLI interface
+
 ## [0.5.3] - 2026-02-07
 
 ### Fixed

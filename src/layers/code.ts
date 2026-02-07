@@ -167,6 +167,9 @@ function detectSuspiciousPatterns(sourceFile: ts.SourceFile, filePath: string): 
   const findings: Finding[] = [];
   const dynamicRequires: number[] = [];
   const evals: number[] = [];
+  const functionConstructors: number[] = [];
+  const propertyAccessBypasses: number[] = [];
+  const stringConcatenations: number[] = [];
 
   function visit(node: ts.Node) {
     // Check for eval() calls
@@ -177,14 +180,44 @@ function detectSuspiciousPatterns(sourceFile: ts.SourceFile, filePath: string): 
         evals.push(lineNumber);
       }
 
-      // Check for require() with non-literal arguments
+      // Check for require() with non-literal arguments (catches dynamic require, template literals, variables)
       if (ts.isIdentifier(expression) && expression.text === 'require') {
         if (node.arguments.length > 0) {
           const arg = node.arguments[0];
+          // Catches: require(variable), require(obj.prop), require(`template${expr}`)
           if (!ts.isStringLiteral(arg) && !ts.isNoSubstitutionTemplateLiteral(arg)) {
             const lineNumber = sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1;
             dynamicRequires.push(lineNumber);
           }
+          // Check for string concatenation: require('child_' + 'process')
+          if (ts.isBinaryExpression(arg) && arg.operatorToken.kind === ts.SyntaxKind.PlusToken) {
+            const lineNumber = sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1;
+            stringConcatenations.push(lineNumber);
+          }
+        }
+      }
+    }
+
+    // Check for Function constructor: new Function(...)
+    if (ts.isNewExpression(node)) {
+      const expression = node.expression;
+      if (ts.isIdentifier(expression) && expression.text === 'Function') {
+        const lineNumber = sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1;
+        functionConstructors.push(lineNumber);
+      }
+    }
+
+    // Check for bracket notation property access on sensitive objects
+    // Catches: global['child_process'], process['env'], require['cache']
+    if (ts.isElementAccessExpression(node)) {
+      const expression = node.expression;
+      if (ts.isIdentifier(expression)) {
+        const objName = expression.text;
+        // Check if accessing sensitive global objects
+        const sensitiveObjects = ['global', 'process', 'require', 'module', 'exports'];
+        if (sensitiveObjects.includes(objName)) {
+          const lineNumber = sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1;
+          propertyAccessBypasses.push(lineNumber);
         }
       }
     }
@@ -203,7 +236,8 @@ function detectSuspiciousPatterns(sourceFile: ts.SourceFile, filePath: string): 
       file: filePath,
       line: dynamicRequires[0],
       detail: `Found ${dynamicRequires.length} dynamic require() call(s)`,
-      evidence: 'Dynamic imports can load arbitrary modules'
+      evidence: 'Dynamic imports can load arbitrary modules',
+      patternId: 'ast-dynamic-require'
     });
   }
 
@@ -216,7 +250,50 @@ function detectSuspiciousPatterns(sourceFile: ts.SourceFile, filePath: string): 
       file: filePath,
       line: evals[0],
       detail: `Found ${evals.length} eval() call(s)`,
-      evidence: 'eval() can execute arbitrary code'
+      evidence: 'eval() can execute arbitrary code',
+      patternId: 'ast-eval'
+    });
+  }
+
+  // Add findings for Function constructor
+  if (functionConstructors.length > 0) {
+    findings.push({
+      severity: 'CRITICAL',
+      category: 'function-constructor',
+      title: 'Function constructor detected',
+      file: filePath,
+      line: functionConstructors[0],
+      detail: `Found ${functionConstructors.length} Function constructor call(s)`,
+      evidence: 'Function constructor can execute arbitrary code like eval()',
+      patternId: 'ast-function-constructor'
+    });
+  }
+
+  // Add findings for property access bypasses
+  if (propertyAccessBypasses.length > 0) {
+    findings.push({
+      severity: 'MEDIUM',
+      category: 'property-access-bypass',
+      title: 'Bracket notation on sensitive objects',
+      file: filePath,
+      line: propertyAccessBypasses[0],
+      detail: `Found ${propertyAccessBypasses.length} bracket notation access(es) on sensitive objects`,
+      evidence: 'Bracket notation can bypass static analysis: global["child_process"]',
+      patternId: 'ast-bracket-access'
+    });
+  }
+
+  // Add findings for string concatenation in require
+  if (stringConcatenations.length > 0) {
+    findings.push({
+      severity: 'HIGH',
+      category: 'string-concatenation',
+      title: 'String concatenation in require()',
+      file: filePath,
+      line: stringConcatenations[0],
+      detail: `Found ${stringConcatenations.length} concatenated string(s) in require()`,
+      evidence: 'String concatenation can hide malicious imports: require("child_" + "process")',
+      patternId: 'ast-string-concat'
     });
   }
 
