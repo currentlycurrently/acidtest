@@ -77,6 +77,7 @@ export interface Skill {
   metadata: SkillMetadata;
   markdownContent: string;
   codeFiles: CodeFile[];
+  isMCP?: boolean; // True if this is an MCP server (not AgentSkills)
 }
 
 /**

@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-02-07
+
+### Fixed
+- **MCP Server Support**: Dramatically improved accuracy for MCP servers
+  - Exclude TypeScript declaration files (.d.ts) from scanning
+  - Skip test files (.spec.ts, .test.ts) from code analysis
+  - Filter out legitimate import statements from path traversal detection
+  - Skip "no declared permissions" warning for MCP servers (different permission model)
+  - Skip permission mismatch checks for MCP servers (network/env/filesystem expected)
+  - Reduce severity of legitimate API client patterns (fetch, process.env, base64, HTTP URLs)
+
+- **False Positive Reduction**: Major improvements to detection accuracy
+  - Path traversal now distinguishes between imports (`import from '../utils'`) and attacks
+  - GitHub's official MCP server now scores 100/100 (was falsely flagged as DANGER)
+  - Exa MCP server improved from 0/100 DANGER to 67/100 WARN
+  - MCP servers are recognized as API clients with appropriate threat modeling
+
+### Enhanced
+- Better MCP manifest detection (`mcp.json`, `server.json`, `package.json`)
+- MCP-aware scoring adjustments for legitimate API client behavior
+- Smarter pattern matching reduces noise in scan results
+
 ## [0.7.0] - 2026-02-07
 
 ### Added

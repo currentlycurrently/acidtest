@@ -44,7 +44,8 @@ export async function scanCrossReference(
   const allowedEnv = metadata.env || [];
 
   // Check for network capability mismatches
-  if (networkFindings.length > 0) {
+  // Skip for MCP servers - they are API clients by design and expected to make network calls
+  if (networkFindings.length > 0 && !skill.isMCP) {
     const declaredNetwork = allowedTools.some(tool =>
       ['browser', 'http', 'fetch', 'network', 'web', 'curl', 'wget'].some(net =>
         tool.toLowerCase().includes(net)
@@ -88,7 +89,8 @@ export async function scanCrossReference(
   }
 
   // Check for file system access mismatches
-  if (fileSystemFindings.length > 0) {
+  // Skip for MCP servers - they may need limited filesystem access for caching
+  if (fileSystemFindings.length > 0 && !skill.isMCP) {
     const declaredFS = allowedTools.some(tool =>
       ['file', 'filesystem', 'fs', 'read', 'write'].some(fs =>
         tool.toLowerCase().includes(fs)
@@ -107,7 +109,8 @@ export async function scanCrossReference(
   }
 
   // Check for environment variable mismatches
-  if (envAccessFindings.length > 0 && skill.codeFiles.length > 0) {
+  // Skip for MCP servers - they commonly use env vars for API keys
+  if (envAccessFindings.length > 0 && skill.codeFiles.length > 0 && !skill.isMCP) {
     // Extract environment variables accessed in code
     const codeEnvVars = extractEnvVarsFromCode(skill.codeFiles);
 

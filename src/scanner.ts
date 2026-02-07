@@ -20,7 +20,7 @@ import {
 import { detectMCPManifest, parseMCPManifest } from "./loaders/mcp-loader.js";
 import { loadConfig, mergeConfig } from "./config.js";
 
-const VERSION = "0.7.0";
+const VERSION = "0.8.0";
 
 /**
  * Main scan function
@@ -81,6 +81,11 @@ export async function scanSkill(skillPath: string, showProgress: boolean = false
     allFindings = allFindings.filter(f =>
       !config.ignore!.categories!.includes(f.category)
     );
+  }
+
+  // Apply MCP-specific severity adjustments
+  if (skill.isMCP) {
+    allFindings = adjustFindingsForMCP(allFindings);
   }
 
   // Calculate score and status
@@ -204,6 +209,7 @@ async function loadMCPServer(
     metadata: manifest.metadata,
     markdownContent,
     codeFiles,
+    isMCP: true, // Flag this as an MCP server
   };
 }
 
@@ -264,6 +270,7 @@ async function findCodeFiles(skillDir: string): Promise<CodeFile[]> {
           "**/test/**",
           "**/*.test.{js,ts,mjs,cjs}",
           "**/*.spec.{js,ts,mjs,cjs}",
+          "**/*.d.ts", // Exclude TypeScript declaration files
           "**/fixtures/**",
           "**/examples/**",
           "**/.git/**",
@@ -280,6 +287,16 @@ async function findCodeFiles(skillDir: string): Promise<CodeFile[]> {
 
       for (const filePath of files) {
         try {
+          // Skip TypeScript declaration files (.d.ts)
+          if (filePath.endsWith('.d.ts')) {
+            continue;
+          }
+
+          // Skip test files
+          if (filePath.includes('.spec.') || filePath.includes('.test.')) {
+            continue;
+          }
+
           const content = readFileSync(filePath, "utf-8");
           const ext = extname(filePath).slice(1); // Remove leading dot
 
@@ -306,6 +323,34 @@ async function findCodeFiles(skillDir: string): Promise<CodeFile[]> {
   }
 
   return codeFiles;
+}
+
+/**
+ * Adjust finding severities for MCP servers
+ * MCP servers are API clients and have different threat models than AgentSkills
+ */
+function adjustFindingsForMCP(findings: Finding[]): Finding[] {
+  return findings.map(finding => {
+    // Lower severity for legitimate API client patterns (by patternId)
+    const mcpLegitimatePatternIds = [
+      'ex-001',  // fetch-call - API clients make HTTP requests
+      'cp-006',  // process-env-access - Need env vars for API keys
+      'ob-001',  // base64-decode - Common for encoding
+      'ex-006',  // http-url-literal - API endpoints are hardcoded
+    ];
+
+    if (mcpLegitimatePatternIds.includes(finding.patternId || '')) {
+      // Reduce severity by one level for MCP servers
+      if (finding.severity === 'MEDIUM') {
+        return { ...finding, severity: 'LOW' as const };
+      }
+      if (finding.severity === 'LOW') {
+        return { ...finding, severity: 'INFO' as const };
+      }
+    }
+
+    return finding;
+  });
 }
 
 /**

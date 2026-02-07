@@ -17,7 +17,8 @@ export async function scanPermissions(skill: Skill): Promise<LayerResult> {
   const credentialPatterns = await loadPatterns('credential-patterns');
 
   // Check for no declared permissions (suspicious)
-  if (!metadata.bins && !metadata.env && !metadata['allowed-tools']) {
+  // Skip this check for MCP servers as they don't use the same permission model
+  if (!skill.isMCP && !metadata.bins && !metadata.env && !metadata['allowed-tools']) {
     findings.push({
       severity: 'LOW',
       category: 'permissions',

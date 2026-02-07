@@ -67,6 +67,15 @@ function scanCodeWithRegex(codeFile: CodeFile, patterns: any[]): Finding[] {
     const matches = content.match(regex);
 
     if (matches && matches.length > 0) {
+      // Special handling for path-traversal pattern (sp-006)
+      // Exclude legitimate import/require statements
+      if (pattern.id === 'sp-006') {
+        const legitimateMatches = filterPathTraversalMatches(content, matches);
+        if (legitimateMatches.length === 0) {
+          continue; // All matches were legitimate imports
+        }
+      }
+
       // Find line number for first match
       const lineNumber = findLineNumber(content, matches[0]);
 
@@ -428,6 +437,39 @@ function detectHighEntropyStrings(sourceFile: ts.SourceFile, filePath: string): 
   }
 
   return findings;
+}
+
+/**
+ * Filter out legitimate path traversal patterns (imports) from suspicious ones
+ * Returns only the suspicious matches
+ */
+function filterPathTraversalMatches(content: string, matches: RegExpMatchArray): string[] {
+  const suspicious: string[] = [];
+
+  // Split content into lines for context checking
+  const lines = content.split('\n');
+
+  for (const match of matches) {
+    // Find which line contains this match
+    const matchIndex = content.indexOf(match);
+    if (matchIndex === -1) continue;
+
+    const beforeMatch = content.substring(0, matchIndex);
+    const lineNumber = beforeMatch.split('\n').length - 1;
+    const line = lines[lineNumber]?.trim() || '';
+
+    // Check if this is a legitimate import/require statement
+    const isImport = /^import\s+.*from\s+['"]/.test(line) ||
+                     /^export\s+.*from\s+['"]/.test(line) ||
+                     /require\s*\(\s*['"]/.test(line);
+
+    // If it's not an import, it's suspicious
+    if (!isImport) {
+      suspicious.push(match);
+    }
+  }
+
+  return suspicious;
 }
 
 /**

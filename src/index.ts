@@ -13,7 +13,7 @@ import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { spawn } from "child_process";
 
-const VERSION = "0.7.0";
+const VERSION = "0.8.0";
 
 /**
  * Main CLI function
