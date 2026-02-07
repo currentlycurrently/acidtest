@@ -124,12 +124,67 @@ acidtest scan ./server/mcp.json        # Direct manifest path
 # Scan all skills/servers in a directory
 acidtest scan-all ./directory
 
+# Watch mode - re-scan on file changes
+acidtest scan ./my-skill --watch
+acidtest scan ./my-skill -w            # Short form
+
+# Show remediation suggestions
+acidtest scan ./my-skill --fix
+
+# Combine flags
+acidtest scan ./my-skill --watch --fix
+
 # JSON output for programmatic use
 acidtest scan ./my-skill --json
 
 # Start as MCP server (for AI agents)
 acidtest serve
 ```
+
+### CLI Options
+
+- `--watch`, `-w` - Watch for file changes and automatically re-scan
+  - Keyboard controls: `q` to quit, `r` to force re-scan, `c` to clear terminal
+  - Use `--no-clear` to preserve terminal history between scans
+- `--fix` - Show actionable remediation suggestions for each finding
+- `--json` - Output results as JSON for programmatic use
+- `--no-clear` - Don't clear terminal between scans (watch mode only)
+
+### Configuration File
+
+Create a `.acidtest.json` file in your skill directory to customize scanning behavior:
+
+```json
+{
+  "ignore": {
+    "patterns": ["di-008"],
+    "categories": ["obfuscation"],
+    "files": ["vendor/**", "*.min.js"]
+  },
+  "thresholds": {
+    "minScore": 80,
+    "failOn": ["CRITICAL", "HIGH"]
+  },
+  "output": {
+    "format": "detailed",
+    "showRemediation": true,
+    "colors": true
+  }
+}
+```
+
+**Configuration Options:**
+
+- `ignore.patterns` - Array of pattern IDs to suppress (e.g., `["di-001", "cp-006"]`)
+- `ignore.categories` - Array of categories to suppress (e.g., `["obfuscation"]`)
+- `ignore.files` - Array of glob patterns for files to skip scanning
+- `thresholds.minScore` - Minimum passing score (0-100). Exit with error if score is below this
+- `thresholds.failOn` - Array of severities that cause scan to fail (e.g., `["CRITICAL", "HIGH"]`)
+- `output.format` - Output format: `"detailed"`, `"compact"`, or `"json"`
+- `output.showRemediation` - Show remediation suggestions (boolean)
+- `output.colors` - Enable/disable colored output (boolean)
+
+CLI flags override config file settings.
 
 ### Use as MCP Server
 

@@ -43,7 +43,8 @@ export async function scanPermissions(skill: Skill): Promise<LayerResult> {
             file: 'SKILL.md',
             detail: `Requests credential environment variable: ${envVar}`,
             evidence: pattern.description,
-            patternId: pattern.id
+            patternId: pattern.id,
+            ...(pattern.remediation && { remediation: pattern.remediation })
           });
         }
       }

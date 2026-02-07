@@ -39,7 +39,8 @@ export async function scanInjection(skill: Skill): Promise<LayerResult> {
         line: lineNumber,
         detail: pattern.description || `Pattern match: ${pattern.name}`,
         evidence: matches.length > 1 ? `${matches.length} matches found` : `Match: "${truncate(matches[0], 100)}"`,
-        patternId: pattern.id
+        patternId: pattern.id,
+        ...(pattern.remediation && { remediation: pattern.remediation })
       });
     }
   }

@@ -8,11 +8,12 @@
 import { scanSkill, scanAllSkills } from "./scanner.js";
 import { reportToTerminal, reportAsJSON } from "./reporter.js";
 import type { ErrorResult } from "./types.js";
+import { loadConfig, mergeConfig } from "./config.js";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { spawn } from "child_process";
 
-const VERSION = "0.6.0";
+const VERSION = "0.7.0";
 
 /**
  * Main CLI function
@@ -56,27 +57,61 @@ async function main() {
 async function handleScan(args: string[]) {
   // Parse flags
   const jsonOutput = args.includes("--json");
-  const paths = args.filter((arg) => !arg.startsWith("--"));
+  const watchMode = args.includes("--watch") || args.includes("-w");
+  const noClear = args.includes("--no-clear");
+  const showFix = args.includes("--fix");
+  const paths = args.filter((arg) => !arg.startsWith("--") && arg !== "-w");
 
   if (paths.length === 0) {
     console.error("Error: No skill path provided");
-    console.error("Usage: acidtest scan <path-to-skill> [--json]");
+    console.error("Usage: acidtest scan <path-to-skill> [--json] [--watch]");
     process.exit(1);
   }
 
   const skillPath = paths[0];
 
+  // Handle watch mode
+  if (watchMode) {
+    const { watchMode: startWatchMode } = await import('./watch.js');
+    await startWatchMode(skillPath, { noClear, jsonOutput, showRemediation: showFix });
+    return; // Watch mode handles its own exit
+  }
+
   try {
-    const result = await scanSkill(skillPath);
+    // Load config from skill directory
+    const userConfig = loadConfig(skillPath);
+    const config = mergeConfig(userConfig);
+
+    // Show progress spinner for CLI scans (not for JSON output)
+    const result = await scanSkill(skillPath, !jsonOutput);
 
     if (jsonOutput) {
       reportAsJSON(result);
     } else {
-      reportToTerminal(result);
+      // CLI flags override config
+      const showRemediation = showFix || (config.output?.showRemediation ?? false);
+      reportToTerminal(result, { showRemediation });
     }
 
-    // Exit with non-zero code for FAIL or DANGER
-    if (result.status === "FAIL" || result.status === "DANGER") {
+    // Apply threshold checks from config
+    let shouldFail = result.status === "FAIL" || result.status === "DANGER";
+
+    // Check minScore threshold
+    if (config.thresholds?.minScore && result.score < config.thresholds.minScore) {
+      shouldFail = true;
+    }
+
+    // Check failOn severity threshold
+    if (config.thresholds?.failOn && config.thresholds.failOn.length > 0) {
+      const hasFailSeverity = result.findings.some(f =>
+        config.thresholds!.failOn!.includes(f.severity)
+      );
+      if (hasFailSeverity) {
+        shouldFail = true;
+      }
+    }
+
+    if (shouldFail) {
       process.exit(1);
     }
   } catch (error) {
@@ -302,7 +337,7 @@ AcidTest v${VERSION}
 Security scanner for AI agent skills and MCP servers
 
 USAGE:
-  acidtest scan <path> [--json]
+  acidtest scan <path> [--json] [--watch] [--fix] [--no-clear]
   acidtest scan-all <directory> [--json]
   acidtest demo
   acidtest serve
@@ -317,6 +352,9 @@ COMMANDS:
 
 OPTIONS:
   --json        Output results as JSON
+  --watch, -w   Watch for file changes and re-scan automatically
+  --fix         Show actionable remediation suggestions for findings
+  --no-clear    Don't clear terminal between scans (watch mode only)
   --version     Print version number
   --help        Show this help message
 
@@ -332,6 +370,12 @@ EXAMPLES:
 
   # Scan with JSON output
   acidtest scan ./my-skill --json
+
+  # Show remediation suggestions for findings
+  acidtest scan ./my-skill --fix
+
+  # Watch for changes and re-scan automatically
+  acidtest scan ./my-skill --watch
 
   # Scan all skills/servers in a directory
   acidtest scan-all ./directory

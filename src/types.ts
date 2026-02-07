@@ -20,6 +20,20 @@ export interface PatternMatch {
 }
 
 /**
+ * Remediation suggestion for a finding
+ */
+export interface Remediation {
+  title: string;
+  suggestions: string[];
+  autofix?: boolean;
+  fixAction?: {
+    type: 'replace';
+    pattern: string;
+    replacement: string;
+  };
+}
+
+/**
  * Detection pattern definition
  */
 export interface Pattern {
@@ -30,6 +44,7 @@ export interface Pattern {
   match: PatternMatch;
   layer: Layer;
   category?: string;
+  remediation?: Remediation;
 }
 
 /**
@@ -85,6 +100,7 @@ export interface Finding {
   detail: string;
   evidence?: string;
   patternId?: string;
+  remediation?: Remediation;
 }
 
 /**
@@ -134,4 +150,24 @@ export interface ErrorResult {
 export interface CliOptions {
   json?: boolean;
   verbose?: boolean;
+}
+
+/**
+ * AcidTest configuration file schema (.acidtest.json)
+ */
+export interface AcidTestConfig {
+  ignore?: {
+    patterns?: string[];      // Pattern IDs to ignore
+    categories?: string[];    // Categories to ignore
+    files?: string[];         // Glob patterns for files to skip
+  };
+  thresholds?: {
+    minScore?: number;        // Minimum passing score (default: 0)
+    failOn?: Severity[];      // Exit 1 if these severities found
+  };
+  output?: {
+    format?: 'detailed' | 'compact' | 'json';
+    showRemediation?: boolean;
+    colors?: boolean;
+  };
 }

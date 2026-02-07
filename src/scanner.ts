@@ -18,20 +18,38 @@ import {
   generateRecommendation,
 } from "./scoring.js";
 import { detectMCPManifest, parseMCPManifest } from "./loaders/mcp-loader.js";
+import { loadConfig, mergeConfig } from "./config.js";
 
-const VERSION = "0.6.0";
+const VERSION = "0.7.0";
 
 /**
  * Main scan function
  * Scans a skill directory or SKILL.md file
  */
-export async function scanSkill(skillPath: string): Promise<ScanResult> {
+export async function scanSkill(skillPath: string, showProgress: boolean = false): Promise<ScanResult> {
+  let spinner: any = null;
+
+  // Show spinner only if requested (typically for CLI, not for tests)
+  if (showProgress) {
+    const ora = (await import('ora')).default;
+    spinner = ora('Loading skill...').start();
+  }
+
   // Load the skill
   const skill = await loadSkill(skillPath);
 
+  // Load configuration
+  const userConfig = loadConfig(skillPath);
+  const config = mergeConfig(userConfig);
+
   // Run all four scanning layers
+  if (spinner) spinner.text = 'Layer 1: Checking permissions...';
   const layer1 = await scanPermissions(skill);
+
+  if (spinner) spinner.text = 'Layer 2: Detecting injection patterns...';
   const layer2 = await scanInjection(skill);
+
+  if (spinner) spinner.text = 'Layer 3: Analyzing code...';
   const layer3 = await scanCode(skill);
 
   // Combine findings from layers 1-3 for cross-reference
@@ -41,15 +59,29 @@ export async function scanSkill(skillPath: string): Promise<ScanResult> {
     ...layer3.findings,
   ];
 
+  if (spinner) spinner.text = 'Layer 4: Cross-referencing behaviors...';
   const layer4 = await scanCrossReference(skill, previousFindings);
 
   // Combine all findings
-  const allFindings: Finding[] = [
+  let allFindings: Finding[] = [
     ...layer1.findings,
     ...layer2.findings,
     ...layer3.findings,
     ...layer4.findings,
   ];
+
+  // Apply ignore filters from config
+  if (config.ignore?.patterns && config.ignore.patterns.length > 0) {
+    allFindings = allFindings.filter(f =>
+      !f.patternId || !config.ignore!.patterns!.includes(f.patternId)
+    );
+  }
+
+  if (config.ignore?.categories && config.ignore.categories.length > 0) {
+    allFindings = allFindings.filter(f =>
+      !config.ignore!.categories!.includes(f.category)
+    );
+  }
 
   // Calculate score and status
   const score = calculateScore(allFindings);
@@ -71,6 +103,10 @@ export async function scanSkill(skillPath: string): Promise<ScanResult> {
     findings: allFindings,
     recommendation,
   };
+
+  if (spinner) {
+    spinner.succeed('Scan complete');
+  }
 
   return result;
 }

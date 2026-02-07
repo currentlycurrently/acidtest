@@ -5,6 +5,47 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-02-07
+
+### Added
+- **Watch Mode**: New `--watch` / `-w` flag for automatic re-scanning on file changes
+  - Monitors skill directory for changes to code files and SKILL.md
+  - Debounced file change detection (300ms)
+  - Keyboard controls: `q` to quit, `r` to force re-scan, `c` to clear terminal
+  - Optional `--no-clear` flag to preserve terminal history between scans
+  - Works seamlessly with other flags (--json, --fix)
+
+- **Remediation Suggestions**: New `--fix` flag shows actionable security guidance
+  - Displays remediation suggestions for detected security issues
+  - Integrated into pattern definitions (eval, child_process, dynamic require, etc.)
+  - Provides specific, actionable steps to fix security vulnerabilities
+  - Each pattern can include title, suggestions, and optional autofix capability
+
+- **Progress Indicators**: Visual feedback during scans
+  - Spinner shows progress through 4 scanning layers
+  - Layer-specific status messages (permissions, injection, code analysis, cross-reference)
+  - Automatic in CLI mode, disabled for JSON output and tests
+  - Powered by ora for smooth terminal animations
+
+- **Improved Terminal Output**: Better visualization of scan results
+  - Summary table with severity counts and examples
+  - Color-coded severity levels (CRITICAL/HIGH/MEDIUM/LOW/INFO)
+  - Cleaner formatting with better visual hierarchy
+  - Powered by cli-table3 for professional table rendering
+
+- **Configuration File Support**: `.acidtest.json` for project-specific settings
+  - **Ignore filters**: Suppress specific patterns, categories, or files
+  - **Thresholds**: Set minimum scores or fail on specific severities
+  - **Output preferences**: Control format, remediation display, and colors
+  - Automatic discovery in skill directory
+  - Graceful degradation on invalid/missing config
+
+### Enhanced
+- All 4 CLI improvements from Phase 1 roadmap fully implemented
+- Test coverage increased to 63 tests (from 54)
+- Better error handling and user feedback
+- Cleaner code organization with new modules (watch.ts, config.ts)
+
 ## [0.6.0] - 2026-02-07
 
 ### Added

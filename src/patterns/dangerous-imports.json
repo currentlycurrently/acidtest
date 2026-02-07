@@ -11,7 +11,17 @@
         "value": "(import|require)\\s*\\(?['\"]child_process['\"]",
         "flags": "g"
       },
-      "layer": "code"
+      "layer": "code",
+      "remediation": {
+        "title": "Avoid command execution when possible",
+        "suggestions": [
+          "Use built-in Node.js APIs instead of shell commands",
+          "If command execution is necessary, use spawn() with explicit arguments",
+          "Never pass user input directly to exec() or shell commands",
+          "Validate and sanitize all command arguments",
+          "Consider using safer alternatives like the 'execa' package"
+        ]
+      }
     },
     {
       "id": "di-002",
@@ -23,7 +33,16 @@
         "value": "\\beval\\s*\\(",
         "flags": "g"
       },
-      "layer": "code"
+      "layer": "code",
+      "remediation": {
+        "title": "Replace eval() with safer alternatives",
+        "suggestions": [
+          "Use JSON.parse() for parsing JSON strings",
+          "Use the Function constructor only for known, non-user code",
+          "Consider removing dynamic code execution entirely",
+          "If absolutely necessary, validate and sanitize all inputs"
+        ]
+      }
     },
     {
       "id": "di-003",
@@ -35,7 +54,15 @@
         "value": "new\\s+Function\\s*\\(",
         "flags": "g"
       },
-      "layer": "code"
+      "layer": "code",
+      "remediation": {
+        "title": "Avoid dynamic function creation",
+        "suggestions": [
+          "Refactor to use static function definitions",
+          "Use object maps or switch statements instead of dynamic functions",
+          "If truly necessary, ensure all code is from trusted sources only"
+        ]
+      }
     },
     {
       "id": "di-004",
@@ -95,7 +122,16 @@
         "value": "require\\s*\\([^'\"]",
         "flags": "g"
       },
-      "layer": "code"
+      "layer": "code",
+      "remediation": {
+        "title": "Replace dynamic require with static imports",
+        "suggestions": [
+          "Use static import/require statements instead",
+          "If dynamic loading is needed, use a whitelist of allowed modules",
+          "Validate module names against a known set before loading",
+          "Consider using dynamic import() with explicit module names"
+        ]
+      }
     },
     {
       "id": "di-009",

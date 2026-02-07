@@ -78,7 +78,8 @@ function scanCodeWithRegex(codeFile: CodeFile, patterns: any[]): Finding[] {
         line: lineNumber,
         detail: pattern.description || `Pattern match: ${pattern.name}`,
         evidence: `Found ${matches.length} occurrence(s)`,
-        patternId: pattern.id
+        patternId: pattern.id,
+        ...(pattern.remediation && { remediation: pattern.remediation })
       });
     }
   }

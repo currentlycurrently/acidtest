@@ -4,12 +4,17 @@
  */
 
 import chalk from 'chalk';
+import Table from 'cli-table3';
 import type { ScanResult, Finding, Status, Severity } from './types.js';
+
+export interface ReportOptions {
+  showRemediation?: boolean;
+}
 
 /**
  * Report scan results to terminal
  */
-export function reportToTerminal(result: ScanResult): void {
+export function reportToTerminal(result: ScanResult, options: ReportOptions = {}): void {
   console.log();
   console.log(chalk.bold(`AcidTest v${result.version}`));
   console.log();
@@ -71,10 +76,16 @@ export function reportToTerminal(result: ScanResult): void {
     ];
 
     for (const finding of grouped) {
-      renderFinding(finding);
+      renderFinding(finding, options.showRemediation);
     }
 
     console.log();
+
+    // Show summary table if there are multiple findings
+    if (result.findings.length > 1) {
+      renderSummaryTable(result.findings);
+      console.log();
+    }
   } else {
     console.log(chalk.green('No security issues detected.'));
     console.log();
@@ -103,7 +114,7 @@ export function reportAsJSON(result: ScanResult): void {
 /**
  * Render a single finding
  */
-function renderFinding(finding: Finding): void {
+function renderFinding(finding: Finding, showRemediation: boolean = false): void {
   const severityIcon = getSeverityIcon(finding.severity);
   const severityColor = getSeverityColor(finding.severity);
 
@@ -130,7 +141,91 @@ function renderFinding(finding: Finding): void {
     console.log(`    ${chalk.dim(finding.evidence)}`);
   }
 
+  // Remediation suggestions (only shown when --fix flag is used)
+  if (showRemediation && finding.remediation) {
+    console.log();
+    console.log(`    ${chalk.cyan.bold('💡 Suggested Fix:')}`);
+    console.log(`    ${chalk.cyan(finding.remediation.title)}`);
+    for (const suggestion of finding.remediation.suggestions) {
+      console.log(`      ${chalk.dim('•')} ${suggestion}`);
+    }
+  }
+
   console.log();
+}
+
+/**
+ * Render summary table for findings
+ */
+function renderSummaryTable(findings: Finding[]): void {
+  // Count findings by severity
+  const counts = {
+    CRITICAL: findings.filter(f => f.severity === 'CRITICAL').length,
+    HIGH: findings.filter(f => f.severity === 'HIGH').length,
+    MEDIUM: findings.filter(f => f.severity === 'MEDIUM').length,
+    LOW: findings.filter(f => f.severity === 'LOW').length,
+    INFO: findings.filter(f => f.severity === 'INFO').length,
+  };
+
+  // Get examples for each severity (up to 3)
+  const getExamples = (severity: Severity): string => {
+    const severityFindings = findings.filter(f => f.severity === severity);
+    const examples = severityFindings.slice(0, 3).map(f => f.title);
+    return examples.join(', ') + (severityFindings.length > 3 ? '...' : '');
+  };
+
+  const table = new Table({
+    head: [chalk.bold('Severity'), chalk.bold('Count'), chalk.bold('Examples')],
+    colWidths: [12, 8, 45],
+    style: {
+      head: [],
+      border: ['dim']
+    }
+  });
+
+  // Only add rows for severities that have findings
+  if (counts.CRITICAL > 0) {
+    table.push([
+      chalk.red.bold('CRITICAL'),
+      chalk.red.bold(counts.CRITICAL.toString()),
+      getExamples('CRITICAL')
+    ]);
+  }
+
+  if (counts.HIGH > 0) {
+    table.push([
+      chalk.red('HIGH'),
+      chalk.red(counts.HIGH.toString()),
+      getExamples('HIGH')
+    ]);
+  }
+
+  if (counts.MEDIUM > 0) {
+    table.push([
+      chalk.yellow('MEDIUM'),
+      chalk.yellow(counts.MEDIUM.toString()),
+      getExamples('MEDIUM')
+    ]);
+  }
+
+  if (counts.LOW > 0) {
+    table.push([
+      chalk.dim('LOW'),
+      chalk.dim(counts.LOW.toString()),
+      chalk.dim(getExamples('LOW'))
+    ]);
+  }
+
+  if (counts.INFO > 0) {
+    table.push([
+      chalk.blue('INFO'),
+      chalk.blue(counts.INFO.toString()),
+      chalk.dim(getExamples('INFO'))
+    ]);
+  }
+
+  console.log(chalk.bold('SUMMARY'));
+  console.log(table.toString());
 }
 
 /**
