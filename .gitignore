@@ -26,7 +26,7 @@ npm-debug.log*
 .env
 .env.local
 
-# Internal docs
+# Internal docs and strategy (private)
+internal/
 feedback*.md
 FEEDBACK*.md
-CLAUDE.md

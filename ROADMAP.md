@@ -97,20 +97,34 @@ Focus: Agent integration and MCP server support
 ## Planned
 
 ### v0.7.0 (Next Major Release)
+Focus: CLI improvements and developer experience
+
+**Priority: HIGH | Complexity: Medium**
+
+- **Watch mode** — `acidtest scan --watch` re-scans on file changes for real-time feedback during development
+- **Fix suggestions** — `acidtest scan --fix` provides actionable remediation for detected issues
+- **Configuration file** — `.acidtest.json` for ignoring false positives and setting custom thresholds
+- **Improved output** — Better terminal formatting with progress indicators, severity badges, and summary tables
+
+These improvements make AcidTest more practical for daily development workflows.
+
+### v0.8.0
 Focus: Enhanced dataflow analysis
 
 **Priority: Medium | Complexity: High**
+
 - **Basic dataflow analysis** — Track tainted values from sources (user input, env vars, network) to dangerous sinks (exec, eval, fetch)
 - **Enhanced cross-reference** — Extract actual fetch() URLs from AST and check if environment variables are sent in network requests
 - **AST-based env var extraction** — Replace regex with TypeScript AST traversal to catch dynamic access patterns
 
-### v0.8.0
-Focus: Pattern management and configurability
+### v0.9.0
+Focus: Pattern management and community
 
 **Priority: Medium | Complexity: Low**
+
 - **Pattern JSON schema validation** — JSON Schema for `src/patterns/*.json` files with automated validation on build
-- **Optional ignore patterns config** — `.acidtest.json` configuration file for suppressing specific findings (useful for CI/CD)
-- **Pattern contribution workflow** — Streamlined PR process with automated testing against known-good/malicious skill corpus
+- **Pattern contribution wizard** — CLI tool to easily add new detection patterns
+- **Pattern effectiveness metrics** — Track which patterns find the most issues
 
 ## Future Considerations
 
