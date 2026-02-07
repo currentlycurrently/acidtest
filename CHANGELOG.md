@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.3] - 2026-02-07
+
+### Fixed
+- **Entropy Detection False Positives**: Improved high-entropy string detection to reduce false positives
+  - Now filters out JWT tokens (eyJ* format with proper structure)
+  - Skips UUIDs (8-4-4-4-12 format)
+  - Ignores hex hashes (MD5, SHA1, SHA256)
+  - Filters legitimate base64 strings with proper padding
+  - Reduces false positives while still catching actual obfuscation
+
+- **Documentation**: Removed uncited third-party statistics from README
+  - Replaced specific numbers with general security principles
+  - Focuses on actual threats without unverifiable claims
+  - More honest positioning about ecosystem risks
+
+### Technical Notes
+- Added `isLegitimateHighEntropyString()` function with pattern matching for known formats
+- Base64 detection now requires padding or >100 char length to avoid flagging random strings
+- All existing test fixtures still pass (no regressions)
+
 ## [0.5.2] - 2026-02-06
 
 ### Fixed

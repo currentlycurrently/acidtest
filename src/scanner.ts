@@ -19,7 +19,7 @@ import {
 } from "./scoring.js";
 import { detectMCPManifest, parseMCPManifest } from "./loaders/mcp-loader.js";
 
-const VERSION = "0.5.2";
+const VERSION = "0.5.3";
 
 /**
  * Main scan function

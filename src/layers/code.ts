@@ -249,6 +249,44 @@ function calculateEntropy(str: string): number {
 }
 
 /**
+ * Check if string matches common legitimate high-entropy patterns
+ */
+function isLegitimateHighEntropyString(text: string): boolean {
+  // JWT tokens (header.payload.signature format, starts with eyJ)
+  if (/^eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(text)) {
+    return true;
+  }
+
+  // UUID/GUID (8-4-4-4-12 format)
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(text)) {
+    return true;
+  }
+
+  // Hex hashes (SHA256: 64 chars, SHA1: 40 chars, MD5: 32 chars)
+  if (/^[0-9a-f]{32}$|^[0-9a-f]{40}$|^[0-9a-f]{64}$/i.test(text)) {
+    return true;
+  }
+
+  // Base64 strings (common in configs, keys)
+  // Must have padding OR be very long (>100 chars suggests real encoded data)
+  // Short base64-looking strings without padding are suspicious
+  if (/^[A-Za-z0-9+/]+=+$/.test(text) && text.length % 4 === 0) {
+    return true; // Has proper padding
+  }
+  if (/^[A-Za-z0-9+/]+$/.test(text) && text.length > 100) {
+    return true; // Very long, likely real encoded data
+  }
+
+  // API keys with common prefixes (Stripe, GitHub, etc.)
+  if (/^(sk_|pk_|gh[ps]_|AKIA|ya29\.|glpat-|xox[abp]-)[A-Za-z0-9_-]+$/i.test(text)) {
+    // These ARE suspicious, so return false to flag them
+    return false;
+  }
+
+  return false;
+}
+
+/**
  * Detect high-entropy strings that may indicate obfuscation
  */
 function detectHighEntropyStrings(sourceFile: ts.SourceFile, filePath: string): Finding[] {
@@ -262,14 +300,20 @@ function detectHighEntropyStrings(sourceFile: ts.SourceFile, filePath: string): 
     if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
       const text = node.text;
 
-      // Skip short strings and URLs (already detected elsewhere)
+      // Skip short strings
       if (text.length < MIN_LENGTH) {
         ts.forEachChild(node, visit);
         return;
       }
 
-      // Skip URLs, they naturally have high entropy
+      // Skip URLs (already detected elsewhere)
       if (/^https?:\/\//.test(text)) {
+        ts.forEachChild(node, visit);
+        return;
+      }
+
+      // Skip legitimate high-entropy strings (JWTs, UUIDs, hashes)
+      if (isLegitimateHighEntropyString(text)) {
         ts.forEachChild(node, visit);
         return;
       }

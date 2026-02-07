@@ -4,11 +4,21 @@ Security scanner for AI agent skills and MCP servers. Scan before you install.
 
 ## The Problem
 
-The AI agent ecosystem is growing rapidly with thousands of skills and MCP servers. Security concerns include:
-- **AgentSkills**: 66,000+ skills with 26% containing vulnerabilities
-- **230+** confirmed malicious skills uploaded to ClawHub in one week
-- **341** skills flagged in the ClawHavoc campaign
-- **MCP Servers**: New ecosystem with similar security risks
+The AI agent ecosystem is growing rapidly, but security lags behind adoption:
+
+- **No centralized vetting**: Unlike mobile app stores, there's no security review before skills are published
+- **Broad permissions**: Skills can request file system access, environment variables, and network calls
+- **Supply chain risks**: Dependencies and third-party code run with full skill permissions
+- **Prompt injection**: Malicious skills can manipulate AI behavior through carefully crafted prompts
+- **Credential harvesting**: Skills requesting API keys and tokens without proper justification
+
+Recent ecosystem incidents highlight these risks:
+- Mass uploads of malicious skills to public marketplaces
+- Skills with undeclared network calls exfiltrating data
+- Obfuscated code hiding malicious behavior
+- Permission escalation through dynamic imports
+
+**AcidTest provides security scanning before installation**, helping you identify risks before they reach your system.
 
 ## Quick Start
 ```bash

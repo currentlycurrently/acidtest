@@ -4,7 +4,28 @@ This document outlines the evolution of AcidTest, tracking completed features an
 
 ## Completed
 
-### v0.5.0 (Current)
+### v0.5.3 (Current)
+Focus: Quality improvements and false positive reduction
+
+- **Entropy detection improvements** — Reduced false positives by filtering JWTs, UUIDs, hashes, and proper base64 strings
+- **Honest documentation** — Removed uncited third-party statistics, clearer positioning about actual risks
+- **Pattern refinements** — Better detection of legitimate vs suspicious high-entropy strings
+
+### v0.5.2
+Focus: CI/CD workflow fixes
+
+- **Workflow reliability** — Fixed GitHub Actions failures on acidtest repository
+- **Local build support** — Workflows now build from source when running on acidtest repo
+- **Smart fixture testing** — Only scans PASS fixtures in CI to avoid false failures from test cases
+
+### v0.5.1
+Focus: Error handling improvements
+
+- **JSON error output** — Errors now output valid JSON when `--json` flag is used
+- **ERROR status type** — Added ERROR status with proper TypeScript types
+- **Workflow error handling** — Templates handle errors correctly with structured output
+
+### v0.5.0
 Focus: CI/CD integration and automation
 
 - **GitHub Actions workflows** — Production-ready templates for automated security scanning in CI/CD pipelines
@@ -51,15 +72,38 @@ Focus: Agent integration and MCP server support
 
 ## Planned
 
-### v0.6.0 (Next Release)
-Focus: Enhanced AST analysis and dataflow tracking
+### v0.6.0 (Next Major Release)
+Focus: Test coverage and improved bypass detection
+
+**Priority: HIGH | Complexity: Medium**
+- **Test suite** — Add proper test framework (Vitest or similar) with unit tests for core scanning logic
+  - Test each layer independently (permissions, injection, code, crossref)
+  - Test scoring calculations and deduction caps
+  - Test pattern matching accuracy
+  - **Blocks contributions and makes refactoring risky without this**
+
+- **Enhanced AST bypass detection** — Catch more sophisticated evasion techniques
+  - Property access patterns: `global['child_process']`, `process['env']`
+  - Computed properties: `require(obj['moduleName'])`
+  - Template literals with expressions: `` require(`child_${x}`) ``
+  - Function constructor: `new Function('return eval')()`
+  - **Currently these slip through, need AST improvements in detectSuspiciousPatterns()**
+
+- **Methodology documentation** — Be transparent about capabilities and limitations
+  - What static analysis can and cannot detect
+  - Known bypass techniques
+  - When to use vs not use acidtest
+  - "Catches 85-90% of attacks, not foolproof against determined attackers"
+
+### v0.7.0
+Focus: Enhanced dataflow analysis
 
 **Priority: Medium | Complexity: High**
 - **Basic dataflow analysis** — Track tainted values from sources (user input, env vars, network) to dangerous sinks (exec, eval, fetch)
 - **Enhanced cross-reference** — Extract actual fetch() URLs from AST and check if environment variables are sent in network requests
 - **AST-based env var extraction** — Replace regex with TypeScript AST traversal to catch dynamic access patterns
 
-### v0.7.0
+### v0.8.0
 Focus: Pattern management and configurability
 
 **Priority: Medium | Complexity: Low**
@@ -96,4 +140,4 @@ See the contribution guidelines in the main README for details on submitting pat
 
 ---
 
-Last updated: 2026-02-06
+Last updated: 2026-02-07
