@@ -24,10 +24,6 @@
 
 ---
 
-<p align="center">
-  <img src="assets/demo.gif" width="800" alt="AcidTest Demo">
-</p>
-
 ## The Problem
 
 The AI agent ecosystem is growing rapidly, but security lags behind adoption:
