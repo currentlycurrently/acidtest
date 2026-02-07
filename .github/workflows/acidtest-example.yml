@@ -27,7 +27,7 @@ jobs:
         if: hashFiles('src/scanner.ts') != ''
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
 
       - name: Run AcidTest
         run: |
@@ -51,7 +51,7 @@ jobs:
         if: hashFiles('src/scanner.ts') != ''
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
 
       - name: Run AcidTest
         id: acidtest
@@ -112,7 +112,7 @@ jobs:
         if: hashFiles('src/scanner.ts') != ''
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
 
       - name: Run AcidTest on all skills
         run: |
@@ -163,7 +163,7 @@ jobs:
         if: hashFiles('src/scanner.ts') != ''
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
 
       - name: Run AcidTest
         id: scan
