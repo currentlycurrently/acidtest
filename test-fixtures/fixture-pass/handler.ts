@@ -15,3 +15,4 @@ export function format(text: string, mode: 'upper' | 'lower' | 'trim'): string {
       return text;
   }
 }
+// Test comment
