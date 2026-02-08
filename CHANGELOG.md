@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] - v1.0.0 Development
+## [1.0.0] - 2026-02-08
+
+**Production Release** - First stable release of AcidTest
 
 ### Phase 3.2: Pattern Expansion (2026-02-08)
 

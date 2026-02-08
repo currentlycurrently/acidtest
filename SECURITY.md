@@ -124,7 +124,7 @@ We use this rubric to classify security issues:
 ### High
 - Denial of service via ReDoS patterns
 - Score manipulation allowing malware to pass as safe
-- Bypass of all four scanning layers
+- Bypass of all five scanning layers
 
 **Example:** Obfuscation technique that evades all pattern detection
 

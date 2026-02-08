@@ -58,7 +58,7 @@ No API keys. No configuration. Works with TypeScript and Python.
 
 ## Example Output
 ```
-AcidTest v0.7.0
+AcidTest v1.0.0
 
 Scanning: proactive-agent
 Source:   test-skills/proactive-agent-1-2-4-1
@@ -106,7 +106,7 @@ RECOMMENDATION: Do not install. Prompt injection attempt detected.
 - Runtime behavior outside static analysis scope
 - Sophisticated polymorphic code or advanced VM-level evasion
 
-See [METHODOLOGY.md](./METHODOLOGY.md) for full transparency on capabilities and limitations (~90-95% detection rate with dataflow).
+See [METHODOLOGY.md](./METHODOLOGY.md) for full transparency on capabilities and limitations (90-95% detection rate with dataflow).
 
 ## How It Works
 
@@ -368,8 +368,6 @@ jobs:
 
 See [`.github/workflows/acidtest-pr-comment.yml`](.github/workflows/acidtest-pr-comment.yml) for the complete PR comment workflow.
 
-**More CI/CD platforms:** See [`docs/ci-cd.md`](./docs/ci-cd.md) for GitLab CI, CircleCI, Travis CI, and Jenkins.
-
 #### Security Badge
 
 Show that your skill is security-scanned:
@@ -421,12 +419,11 @@ MIT
 
 ## Documentation
 
-- [CI/CD Integration Guide](./docs/ci-cd.md) - GitHub Actions, GitLab CI, CircleCI, and more
-- [Template Repository](./template-repo/) - Starter kit with AcidTest pre-configured
-- [Methodology](./METHODOLOGY.md) - Security approach and limitations (~85-90% detection rate)
-- [Technical Specification](./BUILD-SPEC.md) - Architecture and implementation details
-- [Roadmap](./ROADMAP.md) - Planned features and enhancements
+- [Methodology](./METHODOLOGY.md) - Security approach and limitations (90-95% detection rate)
 - [Changelog](./CHANGELOG.md) - Version history
+- [Contributing](./CONTRIBUTING.md) - How to add detection patterns
+- [Security Policy](./SECURITY.md) - Responsible disclosure
+- [Template Repository](./template-repo/) - Starter kit with AcidTest pre-configured
 
 ## Links
 

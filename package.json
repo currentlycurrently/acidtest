@@ -1,13 +1,12 @@
 {
   "name": "acidtest",
-  "version": "0.8.0",
+  "version": "1.0.0",
   "type": "module",
   "description": "Security scanner for AI agent skills. Scan before you install.",
   "bin": {
     "acidtest": "./dist/index.js"
   },
   "scripts": {
-    "validate": "node scripts/validate-patterns.js",
     "validate:patterns": "tsx src/validation/validate-patterns.ts",
     "prebuild": "npm run validate:patterns",
     "build": "tsc && mkdir -p dist/patterns dist/schemas && cp src/patterns/*.json dist/patterns/ && cp src/schemas/*.json dist/schemas/",

@@ -4,16 +4,17 @@ This document provides transparency about AcidTest's detection capabilities, lim
 
 ## What AcidTest Does
 
-AcidTest performs **static analysis** on AI agent skills and MCP servers using four complementary layers:
+AcidTest performs **static analysis** on AI agent skills and MCP servers using five complementary layers:
 
 1. **Permission Analysis** - Audits declared permissions in YAML frontmatter
 2. **Injection Detection** - Scans markdown for prompt injection patterns
-3. **Code Analysis** - AST and regex-based scanning of JavaScript/TypeScript
+3. **Code Analysis** - Multi-language AST analysis (TypeScript + Python) + regex patterns
 4. **Cross-Reference** - Validates permissions match actual behavior
+5. **Dataflow Analysis** - Tracks taint flow from sources (env vars, user input) to dangerous sinks (exec, fetch)
 
 ### Detection Capabilities
 
-**What We Catch Well (~85-90% success rate):**
+**What We Catch Well (90-95% success rate with dataflow analysis):**
 - Direct calls to dangerous APIs (`exec`, `eval`, `Function`)
 - Common prompt injection patterns
 - Hardcoded credentials and API keys

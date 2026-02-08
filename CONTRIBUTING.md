@@ -188,7 +188,7 @@ npm run dev    # Run demo with current code
 
 - `src/index.ts` - CLI entry point
 - `src/scanner.ts` - Main orchestration logic
-- `src/layers/` - Four scanning layers (permissions, injection, code, crossref)
+- `src/layers/` - Five scanning layers (permissions, injection, code, crossref, dataflow)
 - `src/patterns/` - Detection pattern JSON files
 - `src/loaders/` - Skill/MCP manifest parsing
 - `src/mcp-server.ts` - MCP protocol server

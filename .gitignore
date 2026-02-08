@@ -7,8 +7,9 @@ dist/
 # npm pack artifacts
 *.tgz
 
-# Test skills (local only)
+# Test data (local only)
 test-skills/
+test-corpus/
 
 # OS junk
 .DS_Store
@@ -30,3 +31,11 @@ npm-debug.log*
 internal/
 feedback*.md
 FEEDBACK*.md
+
+# Validation scan results (private)
+validation-results/
+
+# Validation scripts (internal use only)
+scripts/batch-validate.sh
+scripts/comprehensive-validate.sh
+scripts/analyze-validation.js
