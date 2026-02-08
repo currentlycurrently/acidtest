@@ -1,11 +1,13 @@
 /**
  * Layer 3: Code Analysis
- * Performs AST analysis on JavaScript/TypeScript handler files
+ * Performs AST analysis on JavaScript/TypeScript/Python handler files
  */
 
 import ts from 'typescript';
 import type { Skill, Finding, LayerResult, CodeFile } from '../types.js';
 import { loadPatterns } from '../pattern-loader.js';
+import { TypeScriptParser } from '../parsers/typescript-parser.js';
+import { PythonParser } from '../parsers/python-parser.js';
 
 /**
  * Scan code files for security issues
@@ -97,13 +99,39 @@ function scanCodeWithRegex(codeFile: CodeFile, patterns: any[]): Finding[] {
 }
 
 /**
- * Scan code file using TypeScript AST
+ * Scan code file using AST analysis
+ * Dispatches to appropriate parser based on file extension
  */
 function scanCodeWithAST(codeFile: CodeFile): Finding[] {
   const findings: Finding[] = [];
   const relativePath = codeFile.path;
 
   try {
+    // Dispatch to appropriate parser based on file extension
+    if (codeFile.extension === 'py') {
+      // Python files - basic AST parsing, detailed pattern matching comes later
+      // For now, we just attempt to parse to verify syntax
+      const pythonParser = new PythonParser();
+      if (pythonParser.canParse(codeFile.path)) {
+        try {
+          pythonParser.parse(codeFile.path, codeFile.content);
+          // Successfully parsed Python file
+          // Detailed Python-specific security patterns will be added in future updates
+        } catch (error) {
+          // Python parse error
+          findings.push({
+            severity: 'MEDIUM',
+            category: 'parse-error',
+            title: 'Failed to parse Python file',
+            file: relativePath,
+            detail: 'Could not parse file as valid Python',
+            evidence: 'May indicate malformed or obfuscated code'
+          });
+        }
+      }
+      return findings;
+    }
+
     // Parse TypeScript/JavaScript
     const sourceFile = ts.createSourceFile(
       codeFile.path,

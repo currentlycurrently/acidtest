@@ -86,7 +86,7 @@ export interface Skill {
 export interface CodeFile {
   path: string;
   content: string;
-  extension: 'ts' | 'js' | 'mjs' | 'cjs';
+  extension: 'ts' | 'js' | 'mjs' | 'cjs' | 'py';
 }
 
 /**

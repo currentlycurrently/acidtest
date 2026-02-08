@@ -8,13 +8,16 @@
   },
   "scripts": {
     "validate": "node scripts/validate-patterns.js",
-    "build": "node scripts/validate-patterns.js && tsc && mkdir -p dist/patterns && cp src/patterns/*.json dist/patterns/",
+    "validate:patterns": "tsx src/validation/validate-patterns.ts",
+    "prebuild": "npm run validate:patterns",
+    "build": "tsc && mkdir -p dist/patterns dist/schemas && cp src/patterns/*.json dist/patterns/ && cp src/schemas/*.json dist/schemas/",
     "dev": "npm run build && node dist/index.js",
     "watch": "tsc --watch",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "test:corpus": "tsx src/test-corpus/validate-corpus.ts"
   },
   "files": [
     "dist",
@@ -41,17 +44,22 @@
   "homepage": "https://acidtest.dev",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.26.0",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
     "chalk": "^5.3.0",
     "chokidar": "^5.0.0",
     "cli-table3": "^0.6.5",
     "glob": "^10.3.10",
     "gray-matter": "^4.0.3",
     "ora": "^9.3.0",
+    "tree-sitter": "^0.21.1",
+    "tree-sitter-python": "^0.21.0",
     "typescript": "^5.3.3"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
     "@vitest/ui": "^4.0.18",
+    "tsx": "^4.21.0",
     "vitest": "^4.0.18"
   },
   "engines": {

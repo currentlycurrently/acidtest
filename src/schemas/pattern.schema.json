@@ -1,0 +1,139 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://acidtest.dev/schemas/pattern.schema.json",
+  "title": "AcidTest Pattern Schema",
+  "description": "JSON Schema for AcidTest security pattern detection files",
+  "type": "object",
+  "required": ["category", "patterns"],
+  "additionalProperties": false,
+  "properties": {
+    "category": {
+      "type": "string",
+      "description": "The category identifier for this pattern file",
+      "minLength": 1,
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "patterns": {
+      "type": "array",
+      "description": "Array of detection patterns",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/definitions/pattern"
+      }
+    }
+  },
+  "definitions": {
+    "pattern": {
+      "type": "object",
+      "required": ["id", "name", "severity", "match", "layer"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique pattern identifier",
+          "pattern": "^[a-z0-9]+-[0-9]+$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable pattern name",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description of what this pattern detects"
+        },
+        "severity": {
+          "type": "string",
+          "description": "Severity level of findings from this pattern",
+          "enum": ["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO"]
+        },
+        "match": {
+          "$ref": "#/definitions/patternMatch"
+        },
+        "layer": {
+          "type": "string",
+          "description": "Which layer this pattern scans",
+          "enum": ["permissions", "markdown", "code", "crossref"]
+        },
+        "category": {
+          "type": "string",
+          "description": "Optional category override for this specific pattern"
+        },
+        "remediation": {
+          "$ref": "#/definitions/remediation"
+        }
+      }
+    },
+    "patternMatch": {
+      "type": "object",
+      "required": ["type", "value"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Type of pattern matching to use",
+          "enum": ["regex", "ast", "exact"]
+        },
+        "value": {
+          "type": "string",
+          "description": "The pattern value (regex string, AST query, or exact string)",
+          "minLength": 1
+        },
+        "flags": {
+          "type": "string",
+          "description": "Regex flags (e.g., 'i', 'g', 'ig')",
+          "pattern": "^[igmsuy]*$"
+        }
+      }
+    },
+    "remediation": {
+      "type": "object",
+      "required": ["title", "suggestions"],
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Title for the remediation guidance",
+          "minLength": 1
+        },
+        "suggestions": {
+          "type": "array",
+          "description": "List of remediation suggestions",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "autofix": {
+          "type": "boolean",
+          "description": "Whether this issue can be automatically fixed"
+        },
+        "fixAction": {
+          "$ref": "#/definitions/fixAction"
+        }
+      }
+    },
+    "fixAction": {
+      "type": "object",
+      "required": ["type", "pattern", "replacement"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Type of fix action",
+          "enum": ["replace"]
+        },
+        "pattern": {
+          "type": "string",
+          "description": "Pattern to find for replacement",
+          "minLength": 1
+        },
+        "replacement": {
+          "type": "string",
+          "description": "Replacement string"
+        }
+      }
+    }
+  }
+}

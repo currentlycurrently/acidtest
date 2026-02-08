@@ -250,12 +250,13 @@ function normalizePermissions(metadata: any): {
 async function findCodeFiles(skillDir: string): Promise<CodeFile[]> {
   const codeFiles: CodeFile[] = [];
 
-  // Search for .ts, .js, .mjs, .cjs files
+  // Search for .ts, .js, .mjs, .cjs, .py files
   const patterns = [
     join(skillDir, "**/*.ts"),
     join(skillDir, "**/*.js"),
     join(skillDir, "**/*.mjs"),
     join(skillDir, "**/*.cjs"),
+    join(skillDir, "**/*.py"),
   ];
 
   for (const pattern of patterns) {
@@ -301,10 +302,11 @@ async function findCodeFiles(skillDir: string): Promise<CodeFile[]> {
           const ext = extname(filePath).slice(1); // Remove leading dot
 
           // Determine extension type
-          let extension: "ts" | "js" | "mjs" | "cjs";
+          let extension: "ts" | "js" | "mjs" | "cjs" | "py";
           if (ext === "ts") extension = "ts";
           else if (ext === "mjs") extension = "mjs";
           else if (ext === "cjs") extension = "cjs";
+          else if (ext === "py") extension = "py";
           else extension = "js";
 
           codeFiles.push({
