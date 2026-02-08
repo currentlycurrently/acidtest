@@ -16,3 +16,4 @@ export function format(text: string, mode: 'upper' | 'lower' | 'trim'): string {
   }
 }
 // Test comment
+// Another test comment to verify v0.8.0 PR workflow fix
