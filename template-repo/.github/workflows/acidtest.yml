@@ -1,0 +1,114 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  acidtest:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run AcidTest Security Scan
+        id: scan
+        continue-on-error: true
+        run: |
+          npx acidtest@latest scan . --json > results.json || true
+
+          STATUS=$(jq -r '.status // "ERROR"' results.json)
+          SCORE=$(jq -r '.score // 0' results.json)
+
+          echo "status=$STATUS" >> $GITHUB_OUTPUT
+          echo "score=$SCORE" >> $GITHUB_OUTPUT
+
+          if [ "$STATUS" = "FAIL" ] || [ "$STATUS" = "DANGER" ]; then
+            echo "scan_failed=true" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let results;
+
+            try {
+              const data = fs.readFileSync('results.json', 'utf8');
+              results = JSON.parse(data);
+            } catch (error) {
+              results = { status: 'ERROR', error: 'Failed to parse scan results', score: 0 };
+            }
+
+            const statusEmoji = { 'PASS': '✅', 'WARN': '⚠️', 'FAIL': '❌', 'DANGER': '🔴', 'ERROR': '⚠️' };
+            const score = results.score || 0;
+            const bars = Math.floor(score / 10);
+            const scoreBar = '█'.repeat(bars) + '░'.repeat(10 - bars);
+
+            let comment = `## ${statusEmoji[results.status]} AcidTest Security Scan\n\n`;
+            comment += `**Score:** ${score}/100 ${scoreBar}\n`;
+            comment += `**Status:** ${results.status}\n\n`;
+
+            if (results.findings && results.findings.length > 0) {
+              const critical = results.findings.filter(f => f.severity === 'CRITICAL').length;
+              const high = results.findings.filter(f => f.severity === 'HIGH').length;
+              const medium = results.findings.filter(f => f.severity === 'MEDIUM').length;
+
+              comment += `### Findings\n\n`;
+              if (critical > 0) comment += `- 🔴 **${critical}** Critical\n`;
+              if (high > 0) comment += `- 🟠 **${high}** High\n`;
+              if (medium > 0) comment += `- 🟡 **${medium}** Medium\n`;
+              comment += `\n`;
+
+              comment += `Run \`npx acidtest scan . --fix\` for remediation suggestions.\n`;
+            } else {
+              comment += '✅ No security issues detected!\n';
+            }
+
+            comment += `\n---\n<sub>Scanned with [AcidTest](https://github.com/currentlycurrently/acidtest)</sub>`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(c =>
+              c.user.type === 'Bot' && c.body.includes('AcidTest Security Scan')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: comment
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: comment
+              });
+            }
+
+      - name: Fail if dangerous
+        if: steps.scan.outputs.scan_failed == 'true'
+        run: |
+          echo "::error::Security scan failed with status: ${{ steps.scan.outputs.status }}"
+          exit 1

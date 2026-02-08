@@ -240,8 +240,8 @@ We believe security tools should be honest about their limitations:
 
 ---
 
-**Last Updated:** 2026-02-07
-**Version:** 0.6.0
+**Last Updated:** 2026-02-08
+**Version:** 0.8.0
 **Maintainers:** AcidTest Team
 
 For questions or feedback, visit: https://github.com/currentlycurrently/acidtest/issues

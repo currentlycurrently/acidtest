@@ -1,0 +1,21 @@
+{
+  "ignore": {
+    "patterns": [],
+    "categories": [],
+    "files": [
+      "test/**",
+      "tests/**",
+      "**/*.test.ts",
+      "**/*.spec.ts"
+    ]
+  },
+  "thresholds": {
+    "minScore": 80,
+    "failOn": ["CRITICAL", "HIGH"]
+  },
+  "output": {
+    "format": "detailed",
+    "showRemediation": true,
+    "colors": true
+  }
+}

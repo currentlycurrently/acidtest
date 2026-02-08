@@ -1,0 +1,30 @@
+{
+  "name": "my-agent-skill",
+  "version": "1.0.0",
+  "description": "A secure AI agent skill template",
+  "main": "dist/handler.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "echo \"Add your tests here\"",
+    "security": "npx acidtest@latest scan .",
+    "security:watch": "npx acidtest@latest scan . --watch",
+    "security:fix": "npx acidtest@latest scan . --fix"
+  },
+  "keywords": [
+    "ai-agent",
+    "agent-skill",
+    "mcp-server",
+    "security"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

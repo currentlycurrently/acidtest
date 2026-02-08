@@ -274,13 +274,38 @@ User: "Can you scan this MCP server before I install it?"
 Claude: [Uses acidtest scan_skill tool to analyze the server]
 ```
 
+### Quick Start with Template
+
+The fastest way to start building secure AI agent skills:
+
+```bash
+# Use the template repository
+# Visit: https://github.com/currentlycurrently/acidtest/tree/main/template-repo
+
+# Or manually create a new skill
+mkdir my-skill && cd my-skill
+npm init -y
+echo '---\nname: my-skill\n---\n# My Skill' > SKILL.md
+
+# Add AcidTest to CI/CD
+mkdir -p .github/workflows
+curl -o .github/workflows/acidtest.yml https://raw.githubusercontent.com/currentlycurrently/acidtest/main/template-repo/.github/workflows/acidtest.yml
+```
+
+The [template repository](./template-repo/) includes:
+- ✅ AcidTest pre-configured
+- ✅ GitHub Actions workflow with PR comments
+- ✅ TypeScript setup
+- ✅ Best practices guide
+- ✅ Example handler
+
 ### Use in CI/CD
 
 Automate security scanning in your GitHub Actions workflows.
 
 #### Quick Setup
 
-Copy this workflow to `.github/workflows/acidtest.yml` in your skill repository:
+Copy this workflow to `.github/workflows/acidtest.yml`:
 
 ```yaml
 name: Security Scan
@@ -301,11 +326,49 @@ jobs:
           fi
 ```
 
-See [`.github/workflows/acidtest-template.yml`](.github/workflows/acidtest-template.yml) for a production-ready template, or [`.github/workflows/acidtest-example.yml`](.github/workflows/acidtest-example.yml) for advanced examples including:
-- Failure thresholds
-- Bulk scanning
-- PR comments
-- Artifact uploads
+#### PR Comments (Recommended)
+
+Automatically comment on pull requests with detailed scan results:
+
+```yaml
+name: AcidTest Security Scan
+
+on:
+  pull_request:
+    paths: ['**.ts', '**.js', 'SKILL.md', 'mcp.json']
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run AcidTest
+        run: npx acidtest@latest scan . --json > results.json || true
+
+      # ... (PR comment script)
+```
+
+See [`.github/workflows/acidtest-pr-comment.yml`](.github/workflows/acidtest-pr-comment.yml) for the complete PR comment workflow.
+
+**More CI/CD platforms:** See [`docs/ci-cd.md`](./docs/ci-cd.md) for GitLab CI, CircleCI, Travis CI, and Jenkins.
+
+#### Security Badge
+
+Show that your skill is security-scanned:
+
+```markdown
+[![Security: AcidTest](https://img.shields.io/badge/security-AcidTest-brightgreen)](https://github.com/currentlycurrently/acidtest)
+```
+
+Displays: [![Security: AcidTest](https://img.shields.io/badge/security-AcidTest-brightgreen)](https://github.com/currentlycurrently/acidtest)
 
 #### Pre-Commit Hook
 
@@ -348,6 +411,9 @@ MIT
 
 ## Documentation
 
+- [CI/CD Integration Guide](./docs/ci-cd.md) - GitHub Actions, GitLab CI, CircleCI, and more
+- [Template Repository](./template-repo/) - Starter kit with AcidTest pre-configured
+- [Methodology](./METHODOLOGY.md) - Security approach and limitations (~85-90% detection rate)
 - [Technical Specification](./BUILD-SPEC.md) - Architecture and implementation details
 - [Roadmap](./ROADMAP.md) - Planned features and enhancements
 - [Changelog](./CHANGELOG.md) - Version history

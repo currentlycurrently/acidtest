@@ -4,7 +4,58 @@ This document outlines the evolution of AcidTest, tracking completed features an
 
 ## Completed
 
-### v0.6.0 (Current)
+### v0.8.0 (Current)
+Focus: MCP server scanning accuracy and false positive reduction
+
+- **MCP-aware scanning** — Different threat models for MCP servers (API clients) vs AgentSkills
+  - MCP servers SHOULD make fetch() calls and use process.env (they're API clients)
+  - Severity adjustments for legitimate API client patterns (fetch, env access, base64, HTTP URLs)
+  - Skip irrelevant permission warnings for MCP servers (different permission model)
+
+- **Exclude TypeScript declaration files** — .d.ts files no longer scanned as executable code
+  - TypeScript declaration files contain type definitions, not runtime code
+  - Prevents false positives from type signatures that look like dangerous patterns
+
+- **Exclude test files** — .spec.ts and .test.ts files automatically skipped
+  - Test code often intentionally includes vulnerable patterns for testing detection
+  - Prevents false positives from security test suites
+
+- **Smart path traversal detection** — Import statements no longer flagged as attacks
+  - `import from '../../../utils'` is legitimate module pattern, not path traversal
+  - Added filterPathTraversalMatches() to distinguish imports from actual attacks
+
+- **Real-world validation** — Tested with high-profile MCP servers
+  - GitHub's official MCP server: 0/100 DANGER → 100/100 PASS
+  - Exa MCP server: 0/100 DANGER → 67/100 WARN (appropriate)
+  - Anthropic skills: All score 97/100 PASS
+
+### v0.7.0
+Focus: CLI improvements and developer experience
+
+- **Watch mode** — `acidtest scan --watch` re-scans on file changes for real-time feedback
+  - Keyboard controls: `q` to quit, `r` to force re-scan, `c` to clear terminal
+  - Debouncing to avoid excessive scans during rapid file changes
+  - Optional `--no-clear` to preserve terminal history
+
+- **Remediation suggestions** — `acidtest scan --fix` provides actionable remediation
+  - Pattern-specific guidance on how to fix security issues
+  - Integrated into findings output with clear explanations
+
+- **Configuration file** — `.acidtest.json` for project-specific settings
+  - Ignore false positives by pattern ID or category
+  - Custom thresholds (minScore, failOn severities)
+  - Output customization (format, colors, remediation display)
+
+- **Improved output** — Better terminal formatting and user experience
+  - ora spinner with layer-specific progress messages
+  - cli-table3 summary tables showing severity counts
+  - Enhanced error handling and reporting
+
+- **Node 20+ requirement** — Updated dependencies require modern Node.js
+  - chokidar 5.x for watch mode
+  - ora 9.x for progress indicators
+
+### v0.6.0
 Focus: Test coverage and improved bypass detection
 
 - **Test suite** — Comprehensive test coverage using Vitest with 54 passing tests
@@ -96,19 +147,7 @@ Focus: Agent integration and MCP server support
 
 ## Planned
 
-### v0.7.0 (Next Major Release)
-Focus: CLI improvements and developer experience
-
-**Priority: HIGH | Complexity: Medium**
-
-- **Watch mode** — `acidtest scan --watch` re-scans on file changes for real-time feedback during development
-- **Fix suggestions** — `acidtest scan --fix` provides actionable remediation for detected issues
-- **Configuration file** — `.acidtest.json` for ignoring false positives and setting custom thresholds
-- **Improved output** — Better terminal formatting with progress indicators, severity badges, and summary tables
-
-These improvements make AcidTest more practical for daily development workflows.
-
-### v0.8.0
+### v0.9.0 (Next Release)
 Focus: Enhanced dataflow analysis
 
 **Priority: Medium | Complexity: High**
@@ -117,7 +156,7 @@ Focus: Enhanced dataflow analysis
 - **Enhanced cross-reference** — Extract actual fetch() URLs from AST and check if environment variables are sent in network requests
 - **AST-based env var extraction** — Replace regex with TypeScript AST traversal to catch dynamic access patterns
 
-### v0.9.0
+### v1.0.0
 Focus: Pattern management and community
 
 **Priority: Medium | Complexity: Low**
@@ -155,4 +194,4 @@ See the contribution guidelines in the main README for details on submitting pat
 
 ---
 
-Last updated: 2026-02-07
+Last updated: 2026-02-08
