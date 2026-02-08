@@ -5,6 +5,68 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] - v1.0.0 Development
+
+### Phase 2: Python Support (2026-02-08)
+
+**Major Feature:** Full Python code analysis with tree-sitter
+
+#### Added
+- **Python Pattern Detection**: 31 new Python-specific security patterns
+  - 17 dangerous import patterns (subprocess, pickle, ctypes, os, etc.)
+  - 14 dangerous call patterns (eval, exec, shell=True, pickle.loads, etc.)
+  - AST-based detection using tree-sitter-python v0.21.0
+  - Detection for eval(), exec(), compile(), __import__()
+  - subprocess with shell=True detection (CRITICAL severity)
+  - Unsafe deserialization (pickle, marshal, shelve)
+  - Command execution (os.system, os.popen, os.exec*/spawn*)
+  - File operations (shutil.rmtree, os.remove, tempfile.mktemp)
+  - Network modules (requests, urllib, httpx, socket)
+  - Native code execution (ctypes, cffi)
+
+- **Python AST Analysis**: Complete Python file parsing and analysis
+  - Tree-sitter-based Python AST traversal
+  - Function call detection with context (shell=True, SafeLoader, etc.)
+  - Import statement analysis
+  - Line-level finding reporting
+  - Support for .py file extensions
+
+- **Test Coverage**: 16 new Python-specific tests
+  - Tests for eval(), exec(), compile(), __import__()
+  - subprocess with/without shell=True
+  - os.system(), pickle.loads(), yaml.load()
+  - Network module imports (requests, socket)
+  - Multiple dangerous patterns in single file
+  - Safe Python code handling
+  - Total: 92 tests (up from 76)
+
+- **Test Corpus**: Python examples for validation
+  - 5 vulnerable Python examples (exec, subprocess, eval, pickle, env exfiltration)
+  - 2 legitimate Python examples (API client, file processor)
+  - Validation script detects 100% of vulnerable Python code
+
+#### Enhanced
+- **Pattern Schema**: JSON Schema validation for all 79 patterns (48 TS + 31 Python)
+- **Parser Architecture**: Abstracted parser interface for multi-language support
+  - TypeScriptParser for .ts/.js files
+  - PythonParser for .py files
+  - Common ParsedFile interface
+
+#### Validation Results
+- **Vulnerable Python Detection**: 5/5 (100%)
+- **Skills Scanned**: 55 OpenClaw skills
+  - PASS: 39 (71%)
+  - WARN: 3 (5%)
+  - FAIL: 3 (5%)
+  - DANGER: 9 (16%)
+- **No TypeScript Regressions**: Existing TypeScript detection maintained
+- **Pattern Tuning**: Network imports (requests/urllib) lowered to LOW severity for legitimate API usage
+
+#### Internal
+- Validation report: `internal/PYTHON-VALIDATION-RESULTS.md`
+- Phase 1 handover: `internal/PHASE1-HANDOVER.md`
+- Dataflow design: `src/analysis/DATAFLOW-DESIGN.md` (Phase 3)
+
 ## [0.8.0] - 2026-02-07
 
 ### Fixed

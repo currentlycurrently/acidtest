@@ -204,9 +204,42 @@ AcidTest's detection patterns are continuously updated based on:
 - Security research publications
 - Feedback from production deployments
 
-**Current pattern count:** 48 detection patterns across 6 categories
+**Current pattern count:** 79 detection patterns
+- 48 TypeScript/JavaScript patterns across 6 categories
+- 31 Python patterns (17 imports, 14 dangerous calls)
 
 **See:** [CONTRIBUTING.md](CONTRIBUTING.md) for how to submit new patterns.
+
+## Python Support
+
+AcidTest provides comprehensive Python code analysis using tree-sitter-python v0.21.0:
+
+**Detection Capabilities:**
+- **Code Execution:** eval(), exec(), compile(), __import__()
+- **Command Injection:** subprocess with shell=True, os.system(), os.popen()
+- **Unsafe Deserialization:** pickle.loads(), marshal.load(), yaml.load() without SafeLoader
+- **File Operations:** shutil.rmtree(), os.remove(), tempfile.mktemp()
+- **Native Code:** ctypes, cffi
+- **Network Operations:** requests, urllib, httpx, socket (context-aware)
+
+**Python-Specific Features:**
+- AST-based function call analysis with context (shell=True detection)
+- Import statement analysis for dangerous modules
+- Distinction between `subprocess.run()` with and without shell=True
+- Lower severity for legitimate API client patterns (requests, os.environ)
+
+**Test Coverage:**
+- 16 Python-specific unit tests
+- 5 vulnerable Python examples (test corpus)
+- 2 legitimate Python examples (API client, file processor)
+- 100% detection rate on vulnerable Python code
+
+**Validation:**
+- Tested against 55 real-world AgentSkills with Python code
+- 71% PASS rate on legitimate skills
+- No regressions in TypeScript detection
+
+Python support is production-ready as of v1.0.0 Phase 2.
 
 ## Comparison to Other Tools
 
@@ -241,7 +274,7 @@ We believe security tools should be honest about their limitations:
 ---
 
 **Last Updated:** 2026-02-08
-**Version:** 0.8.0
+**Version:** v1.0.0-dev (Phase 2 Complete)
 **Maintainers:** AcidTest Team
 
 For questions or feedback, visit: https://github.com/currentlycurrently/acidtest/issues

