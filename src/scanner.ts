@@ -1,6 +1,6 @@
 /**
  * Main scanner orchestrator
- * Coordinates all four scanning layers
+ * Coordinates all five scanning layers
  */
 
 import { readFileSync, existsSync, statSync } from "fs";
@@ -12,6 +12,7 @@ import { scanPermissions } from "./layers/permissions.js";
 import { scanInjection } from "./layers/injection.js";
 import { scanCode } from "./layers/code.js";
 import { scanCrossReference } from "./layers/crossref.js";
+import { scanDataflow } from "./layers/dataflow.js";
 import {
   calculateScore,
   determineStatus,
@@ -42,7 +43,7 @@ export async function scanSkill(skillPath: string, showProgress: boolean = false
   const userConfig = loadConfig(skillPath);
   const config = mergeConfig(userConfig);
 
-  // Run all four scanning layers
+  // Run all five scanning layers
   if (spinner) spinner.text = 'Layer 1: Checking permissions...';
   const layer1 = await scanPermissions(skill);
 
@@ -62,12 +63,16 @@ export async function scanSkill(skillPath: string, showProgress: boolean = false
   if (spinner) spinner.text = 'Layer 4: Cross-referencing behaviors...';
   const layer4 = await scanCrossReference(skill, previousFindings);
 
+  if (spinner) spinner.text = 'Layer 5: Analyzing dataflow...';
+  const layer5 = await scanDataflow(skill);
+
   // Combine all findings
   let allFindings: Finding[] = [
     ...layer1.findings,
     ...layer2.findings,
     ...layer3.findings,
     ...layer4.findings,
+    ...layer5.findings,
   ];
 
   // Apply ignore filters from config
