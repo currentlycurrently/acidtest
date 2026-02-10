@@ -11,7 +11,15 @@ import { loadPatterns } from '../pattern-loader.js';
  */
 export async function scanInjection(skill: Skill): Promise<LayerResult> {
   const findings: Finding[] = [];
-  const markdown = skill.markdownContent;
+  const markdown = skill.markdownContent || '';
+
+  // Skip markdown scanning if no markdown content
+  if (!markdown || markdown.length === 0) {
+    return {
+      layer: 'markdown',
+      findings: []
+    };
+  }
 
   // Load prompt injection and sensitive path patterns
   const promptPatterns = await loadPatterns('prompt-injection');

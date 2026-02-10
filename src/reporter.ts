@@ -21,6 +21,14 @@ export function reportToTerminal(result: ScanResult, options: ReportOptions = {}
   console.log(`Scanning: ${chalk.cyan(result.skill.name)}`);
   console.log(`Source:   ${chalk.dim(result.skill.path)}`);
   console.log();
+
+  // Show warning if no manifest found
+  if (result.skill.hasManifest === false) {
+    console.log(chalk.yellow('⚠  No manifest found. Running security scan without permission audit.'));
+    console.log(chalk.dim('   For full analysis, add SKILL.md: https://acidtest.dev/docs/manifests'));
+    console.log();
+  }
+
   console.log(chalk.dim('━'.repeat(60)));
   console.log();
 

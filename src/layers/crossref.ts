@@ -15,6 +15,14 @@ export async function scanCrossReference(
   const findings: Finding[] = [];
   const metadata = skill.metadata;
 
+  // Skip cross-reference if no manifest found (empty metadata)
+  if (!skill.hasManifest || Object.keys(metadata).length === 0) {
+    return {
+      layer: 'crossref',
+      findings: [] // Empty findings array, no error
+    };
+  }
+
   // Extract findings by category
   const networkFindings = previousFindings.filter(f =>
     f.category.includes('network') ||
