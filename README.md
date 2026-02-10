@@ -73,7 +73,7 @@ npx acidtest scan ./suspicious-python-script
 
 ## Example Output
 ```
-AcidTest v1.0.0
+AcidTest v1.0.1
 
 Scanning: proactive-agent
 Source:   test-skills/proactive-agent-1-2-4-1
