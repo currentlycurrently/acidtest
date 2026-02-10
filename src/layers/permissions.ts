@@ -13,6 +13,14 @@ export async function scanPermissions(skill: Skill): Promise<LayerResult> {
   const findings: Finding[] = [];
   const metadata = skill.metadata;
 
+  // Skip permission audit if no manifest found (empty metadata)
+  if (!skill.hasManifest || Object.keys(metadata).length === 0) {
+    return {
+      layer: 'permissions',
+      findings: [] // Empty findings array, no error
+    };
+  }
+
   // Load credential patterns for environment variable scanning
   const credentialPatterns = await loadPatterns('credential-patterns');
 

@@ -21,7 +21,7 @@ import {
 import { detectMCPManifest, parseMCPManifest } from "./loaders/mcp-loader.js";
 import { loadConfig, mergeConfig } from "./config.js";
 
-const VERSION = "1.0.0";
+const VERSION = "1.0.1";
 
 /**
  * Main scan function
@@ -106,6 +106,7 @@ export async function scanSkill(skillPath: string, showProgress: boolean = false
     skill: {
       name: skill.name,
       path: skill.path,
+      hasManifest: skill.hasManifest,
     },
     score,
     status,
@@ -124,6 +125,7 @@ export async function scanSkill(skillPath: string, showProgress: boolean = false
 /**
  * Load a skill from a directory or SKILL.md file
  * Also supports MCP server manifests (mcp.json, server.json, package.json)
+ * If no manifest found, creates minimal Skill object for code-only scanning
  */
 async function loadSkill(skillPath: string): Promise<Skill> {
   let skillDir: string;
@@ -154,9 +156,8 @@ async function loadSkill(skillPath: string): Promise<Skill> {
     return await loadMCPServer(skillDir, mcpManifestPath);
   }
 
-  throw new Error(
-    `No SKILL.md or MCP manifest found in directory: ${skillDir}`,
-  );
+  // No manifest found - create minimal Skill object for code-only scanning
+  return await loadGenericCode(skillDir);
 }
 
 /**
@@ -186,6 +187,7 @@ async function loadAgentSkill(
     metadata,
     markdownContent,
     codeFiles,
+    hasManifest: true,
   };
 }
 
@@ -215,6 +217,40 @@ async function loadMCPServer(
     markdownContent,
     codeFiles,
     isMCP: true, // Flag this as an MCP server
+    hasManifest: true,
+  };
+}
+
+/**
+ * Load generic code directory without manifest
+ * Creates minimal Skill object to enable code-only scanning
+ */
+async function loadGenericCode(skillDir: string): Promise<Skill> {
+  // Use directory name as skill name
+  const skillName = basename(skillDir) || "unknown-code";
+
+  // Find all code files
+  const codeFiles = await findCodeFiles(skillDir);
+
+  // Check for README.md to use as markdown content (optional)
+  let markdownContent = "";
+  const readmePath = join(skillDir, "README.md");
+  if (existsSync(readmePath)) {
+    try {
+      markdownContent = readFileSync(readmePath, "utf-8");
+    } catch (error) {
+      // Ignore read errors
+    }
+  }
+
+  return {
+    name: skillName,
+    path: skillDir,
+    metadata: {}, // Empty metadata signals no manifest
+    markdownContent,
+    codeFiles,
+    isMCP: false,
+    hasManifest: false, // No manifest found
   };
 }
 

@@ -74,10 +74,11 @@ export interface SkillMetadata {
 export interface Skill {
   name: string;
   path: string;
-  metadata: SkillMetadata;
-  markdownContent: string;
+  metadata: SkillMetadata; // Empty object {} signals no manifest
+  markdownContent?: string; // Optional - may be empty for code-only scanning
   codeFiles: CodeFile[];
   isMCP?: boolean; // True if this is an MCP server (not AgentSkills)
+  hasManifest?: boolean; // True if SKILL.md or MCP manifest was found
 }
 
 /**
@@ -122,6 +123,7 @@ export interface ScanResult {
   skill: {
     name: string;
     path: string;
+    hasManifest?: boolean; // True if SKILL.md or MCP manifest was found
   };
   score: number;
   status: Status;
