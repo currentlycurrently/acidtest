@@ -26,35 +26,50 @@
 
 ## The Problem
 
-The AI agent ecosystem is growing rapidly, but security lags behind adoption:
+**February 2026: The AI agent security crisis went mainstream.**
 
+Researchers discovered **341 malicious skills on ClawHub** (12% of all published skills):
+- **ClawHavoc campaign:** 335 infostealer packages deploying Atomic macOS Stealer
+- **283 skills leaking credentials** (7.1% of ecosystem)
+- **1,467 security flaws** found by Snyk across 3,984 scanned skills (36.82%)
+- **30,000+ exposed OpenClaw instances** on the public internet
+
+The ecosystem is growing faster than security can keep up:
 - **No centralized vetting**: Unlike mobile app stores, there's no security review before skills are published
 - **Broad permissions**: Skills can request file system access, environment variables, and network calls
 - **Supply chain risks**: Dependencies and third-party code run with full skill permissions
 - **Prompt injection**: Malicious skills can manipulate AI behavior through carefully crafted prompts
-- **Credential harvesting**: Skills requesting API keys and tokens without proper justification
-
-Recent ecosystem incidents highlight these risks:
-- Mass uploads of malicious skills to public marketplaces
-- Skills with undeclared network calls exfiltrating data
-- Obfuscated code hiding malicious behavior
-- Permission escalation through dynamic imports
 
 **AcidTest provides security scanning before installation**, helping you identify risks before they reach your system.
+
+Industry response:
+- OpenClaw integrated VirusTotal scanning (February 7, 2026)
+- Cisco released an LLM-based Skill Scanner
+- Snyk published ToxicSkills research
+
+**AcidTest's differentiator:** Dataflow analysis. We track data flow from sources to sinks, catching multi-step attacks that pattern matching alone misses.
 
 ## Quick Start
 ```bash
 # See AcidTest in action
 npx acidtest demo
 
-# Scan an AgentSkills skill
+# Scan ANY AI agent code (works on any Python/TypeScript project)
 npx acidtest scan ./my-skill
-
-# Scan an MCP server
 npx acidtest scan ./my-mcp-server
+npx acidtest scan ./downloaded-from-clawhub
+
+# No manifest required - we scan the code anyway
+npx acidtest scan ./suspicious-python-script
 ```
 
-No API keys. No configuration. Works with TypeScript and Python.
+**No manifest required. No API keys. No configuration.** Works with AgentSkills, MCP servers, or any Python/TypeScript code.
+
+**What makes us different:**
+- ✅ Scans code even without SKILL.md or mcp.json
+- ✅ Dataflow analysis tracks multi-step attacks
+- ✅ 104 patterns across 14 threat categories
+- ✅ Runs completely offline (no cloud uploads)
 
 ## Example Output
 ```
@@ -145,6 +160,32 @@ Works with both SKILL.md (AgentSkills) and MCP manifests (mcp.json, server.json,
 | **Pre-Installation** | ✅ Yes | ✅ Yes | ✅ Yes | ❌ Post-install |
 
 **Defense-in-depth approach:** Use AcidTest **with** `npm audit` and sandboxing for comprehensive security.
+
+## What Makes Us Different
+
+The ClawHub crisis triggered a wave of security tools. Here's how we compare:
+
+**vs. Cisco Skill Scanner:** They use LLM-as-judge (semantic inspection). We use dataflow analysis (deterministic, free, explainable).
+
+**vs. VirusTotal:** They use malware signatures (hash-based). We use static analysis (behavior-based). Use both: VirusTotal for known threats, AcidTest for novel attacks.
+
+**vs. Snyk:** They did excellent research (ToxicSkills report). We built a tool you can run locally today.
+
+**vs. Clawhatch:** They have 128 regex checks. We have 104 AST patterns + dataflow/taint propagation.
+
+**Our unique value:** Layer 5 Dataflow Analysis tracks data from sources (env vars, user input) through assignments and function calls to dangerous sinks (exec, eval, fetch).
+
+Example of what dataflow catches that pattern matching misses:
+```python
+# Pattern matching: "subprocess imported" → MEDIUM
+# Dataflow: "user input → subprocess shell=True" → CRITICAL
+
+cmd = sys.argv[1]                           # SOURCE
+subprocess.call(f"echo {cmd}", shell=True)  # SINK
+# AcidTest detects the 2-step command injection path
+```
+
+See [METHODOLOGY.md](./METHODOLOGY.md) for technical details.
 
 ## Install
 ```bash
@@ -408,6 +449,32 @@ TODO: Add testimonials from dogfooding campaign (Task 1 - Phase 2)
 > "We integrated AcidTest into our CI/CD pipeline. Caught a backdoor in a community contribution before it hit production."
 > — [Company Name]
 -->
+
+## Our Take on the Crisis
+
+The ClawHub security findings (341 malicious skills, 12%) are a wake-up call, but not a death sentence.
+
+**What we believe:**
+
+**1. The crisis is real, but concentrated**
+- 90% of skills are secure (our validation: 145/161 PASS)
+- ClawHavoc campaign = 335 of 341 malicious skills
+- Ecosystem can recover with better tooling
+
+**2. No single tool is the answer**
+Defense-in-depth means using multiple layers:
+- AcidTest (pre-install static analysis)
+- npm audit (dependency vulnerabilities)
+- VirusTotal (known malware)
+- Sandboxing (runtime isolation)
+
+**3. Transparency builds trust**
+We're honest about our ~90-95% detection rate. We document what we can't catch. We show our work in [METHODOLOGY.md](./METHODOLOGY.md).
+
+**4. Open source is the path forward**
+Proprietary scanners create vendor lock-in. Our 104 patterns are JSON files you can review, improve, and contribute to.
+
+**Scan before you install. Make it a habit.**
 
 ## Contributing
 
